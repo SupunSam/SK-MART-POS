@@ -1,0 +1,16 @@
+{
+  "name": "SK MART POS System",
+  "short_name": "SK MART POS",
+  "description": "Modern Point of Sale System for SK MART",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

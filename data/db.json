@@ -1,0 +1,442 @@
+{
+  "categories": [
+    {
+      "id": 1771640920014,
+      "name": "Women's Wear"
+    },
+    {
+      "id": 1771640920037,
+      "name": "Kids' Wear"
+    },
+    {
+      "id": 1771640920059,
+      "name": "Baby Diapers"
+    },
+    {
+      "id": 1771640920079,
+      "name": "Adult Diapers"
+    },
+    {
+      "id": 1771640920103,
+      "name": "Decoration Items"
+    },
+    {
+      "id": 1771640920128,
+      "name": "Gift Items"
+    },
+    {
+      "id": 1771640920152,
+      "name": "Cosmetics & Perfumes"
+    },
+    {
+      "id": 1771640920177,
+      "name": "Another Items"
+    }
+  ],
+  "products": [
+    {
+      "code": "PRD-00000001",
+      "name": "Test Item",
+      "category": "Kids' Wear",
+      "costPrice": 50,
+      "retailPrice": 100,
+      "discountRate": 0,
+      "stock": 6,
+      "lowStockThreshold": 3,
+      "image": null,
+      "id": 1771644835824
+    },
+    {
+      "code": "PRD-00000002",
+      "name": "Test 2",
+      "category": "Women's Wear",
+      "costPrice": 100,
+      "retailPrice": 120,
+      "discountRate": 0,
+      "stock": -1,
+      "lowStockThreshold": 3,
+      "image": null,
+      "id": 1771645399047
+    }
+  ],
+  "sales": [
+    {
+      "timestamp": "2026-02-21T03:18:45.386Z",
+      "items": [
+        {
+          "id": 1771640987113,
+          "code": "121212",
+          "name": "11111111",
+          "qty": 1,
+          "price": 1111,
+          "cost": 111,
+          "discountRate": 0
+        }
+      ],
+      "subtotal": 1111,
+      "totalAmount": 1111,
+      "totalProfit": 1000,
+      "billDiscountRate": 0,
+      "payment": {
+        "cash": 1111,
+        "balance": 0
+      },
+      "paymentMethod": "Cash",
+      "paymentStatus": "Paid",
+      "customerName": "Anonymous",
+      "customerPhone": "",
+      "id": 1771643925398
+    },
+    {
+      "timestamp": "2026-02-21T03:26:48.507Z",
+      "items": [
+        {
+          "id": 1771640987113,
+          "code": "121212",
+          "name": "11111111",
+          "qty": 1,
+          "price": 1111,
+          "cost": 111,
+          "discountRate": 0
+        }
+      ],
+      "subtotal": 1111,
+      "totalAmount": 1111,
+      "totalProfit": 1000,
+      "billDiscountRate": 0,
+      "payment": {
+        "cash": 1111,
+        "balance": 0
+      },
+      "paymentMethod": "Cash",
+      "paymentStatus": "Paid",
+      "customerName": "Anonymous",
+      "customerPhone": "",
+      "id": 1771644408522
+    },
+    {
+      "timestamp": "2026-02-21T03:27:52.561Z",
+      "items": [
+        {
+          "id": 1771640987113,
+          "code": "121212",
+          "name": "11111111",
+          "qty": 1,
+          "price": 1111,
+          "cost": 111,
+          "discountRate": 0
+        }
+      ],
+      "subtotal": 1111,
+      "totalAmount": 1111,
+      "totalProfit": 1000,
+      "billDiscountRate": 0,
+      "payment": {
+        "cash": 1111,
+        "balance": 0
+      },
+      "paymentMethod": "Cash",
+      "paymentStatus": "Paid",
+      "customerName": "Anonymous",
+      "customerPhone": "",
+      "id": 1771644472570
+    },
+    {
+      "timestamp": "2026-02-21T03:35:30.592Z",
+      "items": [
+        {
+          "id": 1771644835824,
+          "code": "PRD-00000001",
+          "name": "Test Item",
+          "qty": 1,
+          "price": 100,
+          "cost": 50,
+          "discountRate": 0
+        }
+      ],
+      "subtotal": 100,
+      "totalAmount": 100,
+      "totalProfit": 50,
+      "billDiscountRate": 0,
+      "payment": {
+        "cash": 100,
+        "balance": 0
+      },
+      "paymentMethod": "Cash",
+      "paymentStatus": "Paid",
+      "customerName": "Anonymous",
+      "customerPhone": "",
+      "id": 1771644930606
+    },
+    {
+      "timestamp": "2026-02-21T03:38:23.074Z",
+      "items": [
+        {
+          "id": 1771644835824,
+          "code": "PRD-00000001",
+          "name": "Test Item",
+          "qty": 1,
+          "price": 100,
+          "cost": 50,
+          "discountRate": 0
+        }
+      ],
+      "subtotal": 100,
+      "totalAmount": 100,
+      "totalProfit": 50,
+      "billDiscountRate": 0,
+      "payment": {
+        "cash": 100,
+        "balance": 0
+      },
+      "paymentMethod": "Cash",
+      "paymentStatus": "Paid",
+      "customerName": "Anonymous",
+      "customerPhone": "",
+      "id": 1771645103084
+    },
+    {
+      "timestamp": "2026-02-21T03:40:03.446Z",
+      "items": [
+        {
+          "id": 1771644835824,
+          "code": "PRD-00000001",
+          "name": "Test Item",
+          "qty": 1,
+          "price": 100,
+          "cost": 50,
+          "discountRate": 0
+        }
+      ],
+      "subtotal": 100,
+      "totalAmount": 100,
+      "totalProfit": 50,
+      "billDiscountRate": 0,
+      "payment": {
+        "cash": 100,
+        "balance": 0
+      },
+      "paymentMethod": "Cash",
+      "paymentStatus": "Paid",
+      "customerName": "Anonymous",
+      "customerPhone": "",
+      "id": 1771645203475
+    },
+    {
+      "timestamp": "2026-02-21T03:41:49.839Z",
+      "items": [
+        {
+          "id": 1771644835824,
+          "code": "PRD-00000001",
+          "name": "Test Item",
+          "qty": 1,
+          "price": 100,
+          "cost": 50,
+          "discountRate": 0
+        }
+      ],
+      "subtotal": 100,
+      "totalAmount": 100,
+      "totalProfit": 50,
+      "billDiscountRate": 0,
+      "payment": {
+        "cash": 100,
+        "balance": 0
+      },
+      "paymentMethod": "Cash",
+      "paymentStatus": "Paid",
+      "customerName": "Anonymous",
+      "customerPhone": "",
+      "id": 1771645309863
+    },
+    {
+      "timestamp": "2026-02-21T03:42:38.956Z",
+      "items": [
+        {
+          "id": 1771645344701,
+          "code": "ddddddddd",
+          "name": "111111",
+          "qty": 1,
+          "price": 12,
+          "cost": 1,
+          "discountRate": 0
+        }
+      ],
+      "subtotal": 12,
+      "totalAmount": 12,
+      "totalProfit": 11,
+      "billDiscountRate": 0,
+      "payment": {
+        "cash": 12,
+        "balance": 0
+      },
+      "paymentMethod": "Cash",
+      "paymentStatus": "Paid",
+      "customerName": "Anonymous",
+      "customerPhone": "",
+      "id": 1771645358964
+    },
+    {
+      "timestamp": "2026-02-21T03:43:28.294Z",
+      "items": [
+        {
+          "id": 1771645399047,
+          "code": "PRD-00000002",
+          "name": "Test 2",
+          "qty": 1,
+          "price": 120,
+          "cost": 100,
+          "discountRate": 0
+        }
+      ],
+      "subtotal": 120,
+      "totalAmount": 120,
+      "totalProfit": 20,
+      "billDiscountRate": 0,
+      "payment": {
+        "cash": 120,
+        "balance": 0
+      },
+      "paymentMethod": "Cash",
+      "paymentStatus": "Paid",
+      "customerName": "Anonymous",
+      "customerPhone": "",
+      "id": 1771645408303
+    },
+    {
+      "timestamp": "2026-02-21T03:44:03.845Z",
+      "items": [
+        {
+          "id": 1771645399047,
+          "code": "PRD-00000002",
+          "name": "Test 2",
+          "qty": 1,
+          "price": 120,
+          "cost": 100,
+          "discountRate": 0
+        }
+      ],
+      "subtotal": 120,
+      "totalAmount": 120,
+      "totalProfit": 20,
+      "billDiscountRate": 0,
+      "payment": {
+        "cash": 1111,
+        "balance": 991
+      },
+      "paymentMethod": "Cash",
+      "paymentStatus": "Paid",
+      "customerName": "Anonymous",
+      "customerPhone": "",
+      "id": 1771645443855
+    },
+    {
+      "timestamp": "2026-02-21T03:54:12.418Z",
+      "items": [
+        {
+          "id": 1771645399047,
+          "code": "PRD-00000002",
+          "name": "Test 2",
+          "qty": 1,
+          "price": 120,
+          "cost": 100,
+          "discountRate": 0
+        }
+      ],
+      "subtotal": 120,
+      "totalAmount": 120,
+      "totalProfit": 20,
+      "billDiscountRate": 0,
+      "payment": {
+        "cash": 120,
+        "balance": 0
+      },
+      "paymentMethod": "Cash",
+      "paymentStatus": "Paid",
+      "customerName": "Anonymous",
+      "customerPhone": "",
+      "id": 1771646052427
+    },
+    {
+      "timestamp": "2026-02-21T03:56:11.539Z",
+      "items": [
+        {
+          "id": 1771645399047,
+          "code": "PRD-00000002",
+          "name": "Test 2",
+          "qty": 1,
+          "price": 120,
+          "cost": 100,
+          "discountRate": 0
+        }
+      ],
+      "subtotal": 120,
+      "totalAmount": 120,
+      "totalProfit": 20,
+      "billDiscountRate": 0,
+      "payment": {
+        "cash": 120,
+        "balance": 0
+      },
+      "paymentMethod": "Cash",
+      "paymentStatus": "Paid",
+      "customerName": "Anonymous",
+      "customerPhone": "",
+      "id": 1771646171549
+    },
+    {
+      "timestamp": "2026-02-21T03:56:40.695Z",
+      "items": [
+        {
+          "id": 1771645399047,
+          "code": "PRD-00000002",
+          "name": "Test 2",
+          "qty": 1,
+          "price": 120,
+          "cost": 100,
+          "discountRate": 0
+        }
+      ],
+      "subtotal": 120,
+      "totalAmount": 120,
+      "totalProfit": 20,
+      "billDiscountRate": 0,
+      "payment": {
+        "cash": 120,
+        "balance": 0
+      },
+      "paymentMethod": "Cash",
+      "paymentStatus": "Paid",
+      "customerName": "Anonymous",
+      "customerPhone": "",
+      "id": 1771646200702
+    },
+    {
+      "timestamp": "2026-02-21T03:57:01.955Z",
+      "items": [
+        {
+          "id": 1771645399047,
+          "code": "PRD-00000002",
+          "name": "Test 2",
+          "qty": 1,
+          "price": 120,
+          "cost": 100,
+          "discountRate": 0
+        }
+      ],
+      "subtotal": 120,
+      "totalAmount": 120,
+      "totalProfit": 20,
+      "billDiscountRate": 0,
+      "payment": {
+        "cash": 120,
+        "balance": 0
+      },
+      "paymentMethod": "Cash",
+      "paymentStatus": "Paid",
+      "customerName": "Anonymous",
+      "customerPhone": "",
+      "id": 1771646221962
+    }
+  ]
+}
