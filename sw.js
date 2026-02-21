@@ -37,26 +37,39 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch Event
+// Fetch Event - Network First Strategy
 self.addEventListener('fetch', (event) => {
+    // Skip external requests (CDNs, etc) - use default cache logic or network
+    if (!event.request.url.startsWith(self.location.origin)) {
+        event.respondWith(
+            caches.match(event.request).then((response) => {
+                return response || fetch(event.request);
+            })
+        );
+        return;
+    }
+
+    // For local assets: Network First
     event.respondWith(
-        caches.match(event.request).then((response) => {
-            // Return cached response if found, else fetch from network
-            return response || fetch(event.request).then((fetchResponse) => {
-                // Cache new successful requests (optional, but good for fonts/CDNs)
-                if (event.request.url.startsWith('http') && fetchResponse.status === 200) {
-                    const responseToCache = fetchResponse.clone();
-                    caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(event.request, responseToCache);
-                    });
-                }
-                return fetchResponse;
-            });
-        }).catch(() => {
-            // Offline fallback if needed (e.g. for images)
-            if (event.request.url.includes('.html')) {
-                return caches.match('./index.html');
-            }
-        })
+        fetch(event.request)
+            .then((response) => {
+                // If network is available, cache the latest version
+                const responseClone = response.clone();
+                caches.open(CACHE_NAME).then((cache) => {
+                    cache.put(event.request, responseClone);
+                });
+                return response;
+            })
+            .catch(() => {
+                // If network fails, try cache
+                return caches.match(event.request).then((response) => {
+                    if (response) return response;
+
+                    // Fallback for HTML
+                    if (event.request.url.includes('.html')) {
+                        return caches.match('./index.html');
+                    }
+                });
+            })
     );
 });

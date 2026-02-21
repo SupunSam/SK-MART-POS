@@ -79,6 +79,10 @@ async function getSalesByDateRange(startDate, endDate) {
     return await apiCall(`/sales/range?start=${startDate}&end=${endDate}`);
 }
 
+async function deleteAllSalesHistory() {
+    return await apiCall('/sales', 'DELETE');
+}
+
 async function getAllSales() {
     return await apiCall('/sales');
 }

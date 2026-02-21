@@ -118,10 +118,27 @@ app.get('/api/sales', (req, res) => {
 app.post('/api/sales', (req, res) => {
     const s = req.body;
     const data = readData();
-    s.id = Date.now();
+
+    // Find max numeric ID (excluding timestamp-based ones)
+    let maxId = 0;
+    data.sales.forEach(sale => {
+        const id = Number(sale.id);
+        if (!isNaN(id) && id < 1000000000000) { // IDs < 10^12 are likely incremental
+            if (id > maxId) maxId = id;
+        }
+    });
+
+    s.id = maxId + 1;
     data.sales.push(s);
     saveData(data);
     res.json({ id: s.id });
+});
+
+app.delete('/api/sales', (req, res) => {
+    const data = readData();
+    data.sales = [];
+    saveData(data);
+    res.json({ success: true });
 });
 
 // Backup/Restore

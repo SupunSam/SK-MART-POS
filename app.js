@@ -5,6 +5,8 @@ let cart = [];
 let currentProducts = [];
 let lastSale = null;
 let currentProductImage = null; // Stores data URL of the selected/pasted image
+let salesCurrentPage = 1;
+const salesItemsPerPage = 10;
 
 // --- DOM Elements ---
 const views = {
@@ -126,8 +128,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (terminalInput) {
             terminalInput.addEventListener('keypress', async (e) => {
                 if (e.key === 'Enter') {
-                    const code = terminalInput.value.trim();
+                    let code = terminalInput.value.trim();
                     if (code) {
+                        // Support numeric-only codes by padding and adding PRD- prefix
+                        if (/^\d+$/.test(code)) {
+                            const formattedCode = `PRD-${code.padStart(8, '0')}`;
+                            let product = currentProducts.find(p => p.code === formattedCode);
+
+                            if (product) {
+                                addToCart(product);
+                                terminalInput.value = '';
+                                return;
+                            }
+                        }
+
+                        // Original search logic
                         const product = currentProducts.find(p => p.code === code);
                         if (product) {
                             addToCart(product);
@@ -165,7 +180,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Initial Load
         loadInventoryTable();
         updateReports();
-        setupConnectivityDetection();
         setupLockTimer();
         setupMobileToggles();
 
@@ -190,73 +204,84 @@ function updateDate() {
 
 // --- Navigation ---
 function setupNavigation() {
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.addEventListener('click', (e) => {
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        item.addEventListener('click', async (e) => {
             e.preventDefault();
-            const targetId = item.dataset.target;
+            const target = item.getAttribute('data-target');
 
-            // Update Active State
-            document.querySelectorAll('.nav-item').forEach(nav => {
-                nav.classList.remove('bg-indigo-600', 'text-white', 'active');
-                nav.classList.add('text-slate-400', 'hover:bg-slate-800', 'hover:text-white');
-            });
-            item.classList.remove('text-slate-400', 'hover:bg-slate-800');
-            item.classList.add('bg-indigo-600', 'text-white', 'active');
+            // Update UI
+            navItems.forEach(i => i.classList.remove('active', 'bg-indigo-600', 'text-white'));
+            navItems.forEach(i => i.classList.add('text-slate-400'));
+            item.classList.add('active', 'bg-indigo-600', 'text-white');
+            item.classList.remove('text-slate-400');
 
-            // Close sidebar on mobile after selection
+            // Show section
+            document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
+            const targetSection = document.getElementById(target);
+            if (targetSection) targetSection.classList.remove('hidden');
+
+            // Update title
+            const title = item.querySelector('span').textContent;
+            document.getElementById('page-title').textContent = title;
+
+            // Load specific data
+            if (target === 'inventory-section' || target === 'products-section') {
+                loadInventoryTable();
+            } else if (target === 'sales-section') {
+                loadSalesHistory();
+            } else if (target === 'dashboard-section') {
+                updateReports();
+            } else if (target === 'categories-section') {
+                loadCategoriesPage();
+            }
+
+            // Auto-close sidebar on mobile
             if (window.innerWidth < 1024) {
                 const sidebar = document.getElementById('sidebar');
                 const backdrop = document.getElementById('sidebar-backdrop');
                 if (sidebar) sidebar.classList.add('-translate-x-full');
                 if (backdrop) backdrop.classList.add('hidden');
             }
-
-            // Show View
-            Object.values(views).forEach(view => {
-                if (view) view.classList.add('hidden');
-            });
-
-            if (views[targetId.split('-')[0]]) { // map 'pos-section' -> 'pos'
-                views[targetId.split('-')[0]].classList.remove('hidden');
-                // Focus terminal if POS
-                if (targetId === 'pos-section') {
-                    const terminal = document.getElementById('pos-terminal-input');
-                    if (terminal) setTimeout(() => terminal.focus(), 100);
-                }
-            } else {
-                const el = document.getElementById(targetId);
-                if (el) el.classList.remove('hidden');
-            }
-
-            // Update Page Title
-            const pageTitle = document.getElementById('page-title');
-            if (pageTitle) {
-                const titleMap = {
-                    'pos-section': 'POS Terminal',
-                    'products-section': 'Inventory Management',
-                    'sales-section': 'Sales History',
-                    'dashboard-section': 'Dashboard'
-                };
-                pageTitle.textContent = titleMap[targetId] || 'Dashboard';
-            }
-
-            // Refresh data based on view
-            if (targetId === 'products-section') loadInventoryTable();
-            if (targetId === 'sales-section') loadSalesHistory();
-            if (targetId === 'dashboard-section') updateReports();
         });
     });
 }
 
 // --- Mobile Responsiveness Helpers ---
-window.toggleSidebar = function () {
+window.toggleSidebar = function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const backdrop = document.getElementById('sidebar-backdrop');
-    if (sidebar && backdrop) {
-        sidebar.classList.toggle('-translate-x-full');
-        backdrop.classList.toggle('hidden');
+
+    if (window.innerWidth < 1024) {
+        // Mobile Toggle logic
+        const isHidden = sidebar.classList.contains('-translate-x-full');
+        if (isHidden) {
+            sidebar.classList.remove('-translate-x-full');
+            backdrop.classList.remove('hidden');
+        } else {
+            sidebar.classList.add('-translate-x-full');
+            backdrop.classList.add('hidden');
+        }
+    } else {
+        // Desktop Toggle logic
+        const body = document.body;
+        const isCollapsed = body.classList.contains('sidebar-collapsed');
+        if (isCollapsed) {
+            body.classList.remove('sidebar-collapsed');
+            sidebar.classList.remove('w-20');
+            sidebar.classList.add('w-64');
+            // Show text spans
+            sidebar.querySelectorAll('span').forEach(s => s.classList.remove('hidden'));
+            // Center icons? handled by w-20 usually
+        } else {
+            body.classList.add('sidebar-collapsed');
+            sidebar.classList.remove('w-64');
+            sidebar.classList.add('w-20');
+            // Hide text spans
+            sidebar.querySelectorAll('span').forEach(s => s.classList.add('hidden'));
+        }
     }
-};
+}
 
 window.toggleCart = function () {
     const cartEl = document.getElementById('cart-panel');
@@ -305,26 +330,18 @@ async function loadCategories() {
     try {
         let categories = await getAllCategories();
 
-        // Migration: If no categories exist, seed from existing products or defaults
+        // Migration: If no categories exist, seed
         if (categories.length === 0) {
-            const products = await getAllProducts();
-            const existingCats = [...new Set(products.map(p => p.category))].filter(Boolean);
             const defaults = ["Women's Wear", "Kids' Wear", "Baby Diapers", "Adult Diapers", "Decoration Items", "Gift Items", "Cosmetics & Perfumes", "Another Items"];
-            const toAdd = existingCats.length > 0 ? existingCats : defaults;
-
-            // Re-check current categories to avoid adding duplicates if called multiple times
-            const currentCats = await getAllCategories();
-            for (const name of toAdd) {
-                if (!currentCats.some(c => c.name === name)) {
-                    await addCategory({ name });
-                }
+            for (const name of defaults) {
+                await addCategory({ name });
             }
             categories = await getAllCategories();
         }
 
+        // Update Dropdowns
         const catFilter = document.getElementById('pos-category-filter');
         const prodCat = document.getElementById('product-category');
-        const catList = document.getElementById('category-list');
 
         if (catFilter) {
             const currentVal = catFilter.value;
@@ -342,48 +359,78 @@ async function loadCategories() {
                 prodCat.innerHTML += `<option value="${cat.name}">${cat.name}</option>`;
             });
         }
-
-        if (catList) {
-            catList.innerHTML = '';
-            categories.forEach(cat => {
-                const li = document.createElement('li');
-                li.className = "flex items-center justify-between p-3 hover:bg-slate-50 transition-colors";
-                li.innerHTML = `
-                    <span class="text-sm font-medium text-slate-700">${cat.name}</span>
-                    <button onclick="confirmDeleteCategory(${cat.id})" class="text-red-400 hover:text-red-600 p-1">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
-                `;
-                catList.appendChild(li);
-            });
-            if (window.lucide) lucide.createIcons();
-        }
     } catch (e) {
         console.error("Error loading categories:", e);
     }
 }
 
-function openCategoryModal() {
-    const modal = document.getElementById('category-modal');
-    if (modal) modal.classList.remove('hidden');
-    loadCategories();
+async function loadCategoriesPage() {
+    try {
+        const categories = await getAllCategories();
+        const tbody = document.getElementById('categories-table-body');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+        categories.forEach(cat => {
+            const row = document.createElement('tr');
+            row.className = "hover:bg-slate-50 border-b border-slate-100";
+            row.innerHTML = `
+                <td class="p-4 text-sm font-medium text-slate-700">${cat.name}</td>
+                <td class="p-4 text-center">
+                    <button onclick="confirmDeleteCategory(${cat.id})" class="text-red-500 hover:text-red-700 p-2">
+                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+        if (window.lucide) lucide.createIcons();
+    } catch (e) {
+        console.error("Error loading categories page:", e);
+    }
 }
 
-function closeCategoryModal() {
-    const modal = document.getElementById('category-modal');
-    if (modal) modal.classList.add('hidden');
+async function handleCategoryAdd(e) {
+    if (e) e.preventDefault();
+    const input = document.getElementById('standalone-category-name');
+    const name = input.value.trim();
+    if (!name) return;
+
+    try {
+        await addCategory({ name });
+        input.value = '';
+        loadCategoriesPage();
+        loadCategories(); // Update dropdowns
+        alert("Category added successfully");
+    } catch (err) {
+        console.error("Add category error:", err);
+        alert("Failed to add category");
+    }
+}
+
+
+async function reloadAppData() {
+    try {
+        await loadProducts();
+        alert("Database Reloaded Successfully!");
+    } catch (e) {
+        console.error("Reload Error:", e);
+        alert("Failed to reload database.");
+    }
 }
 
 async function confirmDeleteCategory(id) {
     if (confirm("Are you sure you want to delete this category? Products in this category will not be deleted.")) {
         await deleteCategory(id);
         await loadCategories();
+        loadCategoriesPage();
     }
 }
 
-window.openCategoryModal = openCategoryModal;
-window.closeCategoryModal = closeCategoryModal;
 window.confirmDeleteCategory = confirmDeleteCategory;
+window.handleCategoryAdd = handleCategoryAdd;
+window.toggleSidebar = toggleSidebar;
+window.reloadAppData = reloadAppData;
 
 function setPOSViewMode(mode) {
     posViewMode = mode;
@@ -516,15 +563,33 @@ function addToCart(product) {
         existing.qty++;
     } else {
         // Clone and add default discount from product
-        cart.push({ ...product, qty: 1, discountRate: product.discountRate || 0 });
+        cart.push({
+            ...product,
+            qty: 1,
+            discountRate: product.discountType === 'fixed' ? 0 : (product.discountRate || 0),
+            discountValue: product.discountType === 'fixed' ? (product.discountRate || 0) : 0,
+            discountType: product.discountType || 'percent'
+        });
     }
     updateCartUI();
 }
 
-function updateItemDiscount(id, rate) {
+function updateItemDiscount(id, val) {
     const item = cart.find(i => i.id === id);
     if (item) {
-        item.discountRate = parseFloat(rate) || 0;
+        if (item.discountType === 'fixed') {
+            item.discountValue = parseFloat(val) || 0;
+        } else {
+            item.discountRate = parseFloat(val) || 0;
+        }
+        updateCartUI();
+    }
+}
+
+function updateItemDiscountType(id, type) {
+    const item = cart.find(i => i.id === id);
+    if (item) {
+        item.discountType = type;
         updateCartUI();
     }
 }
@@ -573,8 +638,13 @@ function updateCartUI() {
     } else {
         cart.forEach(item => {
             const lineTotal = item.qty * item.retailPrice;
-            const lineDiscount = lineTotal * ((item.discountRate || 0) / 100);
-            const netLineTotal = lineTotal - lineDiscount;
+            let lineDiscount = 0;
+            if (item.discountType === 'fixed') {
+                lineDiscount = (item.discountValue || 0);
+            } else {
+                lineDiscount = lineTotal * ((item.discountRate || 0) / 100);
+            }
+            const netLineTotal = Math.max(0, lineTotal - lineDiscount);
 
             subtotal += lineTotal;
             totalItemDiscount += lineDiscount;
@@ -603,10 +673,13 @@ function updateCartUI() {
                 <div class="flex items-center justify-between text-[10px] border-t border-slate-50 pt-1">
                     <div class="flex items-center gap-2">
                         <span class="text-slate-400">Discount:</span>
-                        <input type="number" value="${item.discountRate || 0}" min="0" max="100" 
-                            class="w-10 px-1 border border-slate-100 rounded bg-slate-50 text-center outline-none focus:ring-1 focus:ring-indigo-300"
+                        <input type="number" value="${item.discountType === 'fixed' ? (item.discountValue || 0) : (item.discountRate || 0)}" min="0" 
+                            class="w-12 px-1 border border-slate-100 rounded bg-slate-50 text-center outline-none focus:ring-1 focus:ring-indigo-300"
                             onchange="updateItemDiscount(${item.id}, this.value)">
-                        <span class="text-slate-400">%</span>
+                        <select onchange="updateItemDiscountType(${item.id}, this.value)" class="bg-transparent border-none p-0 text-indigo-600 font-bold focus:ring-0 cursor-pointer">
+                            <option value="percent" ${item.discountType !== 'fixed' ? 'selected' : ''}>%</option>
+                            <option value="fixed" ${item.discountType === 'fixed' ? 'selected' : ''}>Rs.</option>
+                        </select>
                     </div>
                     <span class="text-slate-500 font-medium font-mono">Net: Rs. ${netLineTotal.toFixed(2)}</span>
                 </div>
@@ -616,10 +689,18 @@ function updateCartUI() {
         if (window.lucide) lucide.createIcons();
     }
 
-    const billDiscountRate = parseFloat(document.getElementById('bill-discount-input')?.value || 0);
+    const billDiscountType = document.getElementById('bill-discount-type')?.value || 'percent';
+    const billDiscountInput = parseFloat(document.getElementById('bill-discount-input')?.value || 0);
     const afterItemDiscount = subtotal - totalItemDiscount;
-    const billDiscountAmount = afterItemDiscount * (billDiscountRate / 100);
-    const finalTotal = afterItemDiscount - billDiscountAmount;
+
+    let billDiscountAmount = 0;
+    if (billDiscountType === 'fixed') {
+        billDiscountAmount = billDiscountInput;
+    } else {
+        billDiscountAmount = afterItemDiscount * (billDiscountInput / 100);
+    }
+
+    const finalTotal = Math.max(0, afterItemDiscount - billDiscountAmount);
     const totalDiscount = totalItemDiscount + billDiscountAmount;
 
     const subtotalEl = document.getElementById('cart-subtotal');
@@ -651,10 +732,25 @@ function openPaymentModal() {
         return;
     }
 
-    const billDiscountRate = parseFloat(document.getElementById('bill-discount-input')?.value || 0);
+    const billDiscountType = document.getElementById('bill-discount-type')?.value || 'percent';
+    const billDiscountInput = parseFloat(document.getElementById('bill-discount-input')?.value || 0);
+
     const subtotal = cart.reduce((sum, item) => sum + (item.qty * item.retailPrice), 0);
-    const itemDiscounts = cart.reduce((sum, item) => sum + (item.qty * item.retailPrice * ((item.discountRate || 0) / 100)), 0);
-    const totalAmount = (subtotal - itemDiscounts) * (1 - (billDiscountRate / 100));
+    const itemDiscounts = cart.reduce((sum, item) => {
+        const lineTotal = item.qty * item.retailPrice;
+        if (item.discountType === 'fixed') return sum + (item.discountValue || 0);
+        return sum + (lineTotal * ((item.discountRate || 0) / 100));
+    }, 0);
+
+    const afterItemDiscount = subtotal - itemDiscounts;
+    let billDiscountAmount = 0;
+    if (billDiscountType === 'fixed') {
+        billDiscountAmount = billDiscountInput;
+    } else {
+        billDiscountAmount = afterItemDiscount * (billDiscountInput / 100);
+    }
+
+    const totalAmount = Math.max(0, afterItemDiscount - billDiscountAmount);
 
     const totalEl = document.getElementById('payment-total-display');
     const cashInput = document.getElementById('payment-cash');
@@ -701,10 +797,25 @@ window.togglePaymentFields = togglePaymentFields;
 
 
 function updatePaymentBalance() {
-    const billDiscountRate = parseFloat(document.getElementById('bill-discount-input')?.value || 0);
+    const billDiscountType = document.getElementById('bill-discount-type')?.value || 'percent';
+    const billDiscountInput = parseFloat(document.getElementById('bill-discount-input')?.value || 0);
+
     const subtotal = cart.reduce((sum, item) => sum + (item.qty * item.retailPrice), 0);
-    const itemDiscounts = cart.reduce((sum, item) => sum + (item.qty * item.retailPrice * ((item.discountRate || 0) / 100)), 0);
-    const totalAmount = (subtotal - itemDiscounts) * (1 - (billDiscountRate / 100));
+    const itemDiscounts = cart.reduce((sum, item) => {
+        const lineTotal = item.qty * item.retailPrice;
+        if (item.discountType === 'fixed') return sum + (item.discountValue || 0);
+        return sum + (lineTotal * ((item.discountRate || 0) / 100));
+    }, 0);
+
+    const afterItemDiscount = subtotal - itemDiscounts;
+    let billDiscountAmount = 0;
+    if (billDiscountType === 'fixed') {
+        billDiscountAmount = billDiscountInput;
+    } else {
+        billDiscountAmount = afterItemDiscount * (billDiscountInput / 100);
+    }
+
+    const totalAmount = Math.max(0, afterItemDiscount - billDiscountAmount);
 
     const cashInput = document.getElementById('payment-cash');
     const cash = parseFloat(cashInput ? cashInput.value : 0) || 0;
@@ -730,15 +841,39 @@ function updatePaymentBalance() {
 async function finalizeSale() {
     if (cart.length === 0) return;
 
-    const billDiscountRate = parseFloat(document.getElementById('bill-discount-input')?.value || 0);
+    const billDiscountType = document.getElementById('bill-discount-type')?.value || 'percent';
+    const billDiscountInput = parseFloat(document.getElementById('bill-discount-input')?.value || 0);
+
     const subtotal = cart.reduce((sum, item) => sum + (item.qty * item.retailPrice), 0);
-    const itemDiscounts = cart.reduce((sum, item) => sum + (item.qty * item.retailPrice * ((item.discountRate || 0) / 100)), 0);
-    const totalAmount = (subtotal - itemDiscounts) * (1 - (billDiscountRate / 100));
+    const itemDiscounts = cart.reduce((sum, item) => {
+        const lineTotal = item.qty * item.retailPrice;
+        if (item.discountType === 'fixed') return sum + (item.discountValue || 0);
+        return sum + (lineTotal * ((item.discountRate || 0) / 100));
+    }, 0);
+
+    const afterItemDiscount = subtotal - itemDiscounts;
+    let billDiscountAmount = 0;
+    if (billDiscountType === 'fixed') {
+        billDiscountAmount = billDiscountInput;
+    } else {
+        billDiscountAmount = afterItemDiscount * (billDiscountInput / 100);
+    }
+
+    const totalAmount = Math.max(0, afterItemDiscount - billDiscountAmount);
 
     const totalProfit = cart.reduce((sum, item) => {
-        const itemRevenue = (item.qty * item.retailPrice * (1 - ((item.discountRate || 0) / 100)));
+        let itemRevenue = 0;
+        if (item.discountType === 'fixed') {
+            itemRevenue = Math.max(0, (item.qty * item.retailPrice) - (item.discountValue || 0));
+        } else {
+            itemRevenue = (item.qty * item.retailPrice * (1 - ((item.discountRate || 0) / 100)));
+        }
         return sum + (itemRevenue - (item.costPrice * item.qty));
-    }, 0) * (1 - (billDiscountRate / 100)); // Apply global discount to profit too
+    }, 0);
+
+    // Apply global discount proportionally to profit? 
+    // Actually, it's simpler to just subtract the bill discount from the total profit.
+    const finalTotalProfit = Math.max(0, totalProfit - billDiscountAmount);
 
     const cashInput = document.getElementById('payment-cash');
     const cashReceived = parseFloat(cashInput ? cashInput.value : 0) || 0;
@@ -760,12 +895,16 @@ async function finalizeSale() {
             qty: i.qty,
             price: i.retailPrice,
             cost: i.costPrice,
-            discountRate: i.discountRate || 0
+            discountRate: i.discountType === 'percent' ? (i.discountRate || 0) : 0,
+            discountValue: i.discountType === 'fixed' ? (i.discountValue || 0) : 0,
+            discountType: i.discountType || 'percent'
         })),
         subtotal: subtotal,
         totalAmount: totalAmount,
-        totalProfit: totalProfit,
-        billDiscountRate: billDiscountRate,
+        totalProfit: finalTotalProfit,
+        billDiscountRate: billDiscountType === 'percent' ? billDiscountInput : 0,
+        billDiscountValue: billDiscountType === 'fixed' ? billDiscountInput : 0,
+        billDiscountType: billDiscountType,
         payment: {
             cash: paymentMethod === 'Credit' ? 0 : cashReceived,
             balance: paymentMethod === 'Credit' ? 0 : (cashReceived - totalAmount)
@@ -785,6 +924,10 @@ async function finalizeSale() {
 
         generateReceipt(sale, formatID(saleId, 'INV'));
         lastSale = { ...sale, id: saleId };
+
+        // Refresh sales history if we are in that view (though usually we are in POS)
+        salesCurrentPage = 1;
+        loadSalesHistory();
 
         const formattedSaleId = formatID(saleId, 'INV');
 
@@ -868,7 +1011,9 @@ function generateReceiptHTML(sale, formattedId) {
     let itemsHtml = '';
     sale.items.forEach(item => {
         const itemTotal = item.qty * item.price;
-        const itemDiscount = itemTotal * (item.discountRate / 100);
+        const itemDiscount = item.discountType === 'fixed' ? (item.discountValue || 0) : (itemTotal * ((item.discountRate || 0) / 100));
+        const discLabel = item.discountType === 'fixed' ? `(Rs. ${parseFloat(item.discountValue || 0).toFixed(2)})` : `(-${item.discountRate}%)`;
+
         itemsHtml += `
             <div style="margin-bottom: 6px; font-size: 13px;">
                 <div style="display: flex; justify-content: space-between;">
@@ -877,7 +1022,7 @@ function generateReceiptHTML(sale, formattedId) {
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 11px; color: #444;">
                     <span>${item.qty} x ${parseFloat(item.price).toFixed(2)}</span>
-                    ${itemDiscount > 0 ? `<span style="color: #000;">(-${item.discountRate}%) -${itemDiscount.toFixed(2)}</span>` : ''}
+                    ${itemDiscount > 0 ? `<span style="color: #000;">${discLabel} -${itemDiscount.toFixed(2)}</span>` : ''}
                 </div>
             </div>
         `;
@@ -890,7 +1035,7 @@ function generateReceiptHTML(sale, formattedId) {
             
     <!-- Header -->
     <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 12px; margin-bottom: 16px;">
-        <h1 style="font-size: 28px; font-weight: 900; margin: 0;">SK MART TRADING</h1>
+        <h1 style="font-size: 28px; font-weight: 900; margin: 0; word-spacing: -2px;">SK MART TRADING</h1>
         <p style="font-size: 12px; margin: 1px 0; font-style: italic; margin-bottom: 12px;">For Home. For Care. For You.</p>
         <p style="font-size: 14px; margin: 2px 0;">601/2 Nindahena, Gothatuwa</p>
         <p style="font-size: 14px; margin: 2px 0;">TEL: 0112 119 438</p>
@@ -924,11 +1069,16 @@ function generateReceiptHTML(sale, formattedId) {
             <span>Rs. ${(sale.subtotal || sale.totalAmount).toFixed(2)}</span>
         </div>
 
-        ${totalDiscountAmount > 0 ? `
+        ${sale.billDiscountType === 'fixed' ? `
         <div style="display: flex; justify-content: space-between; font-size: 14px;">
-            <span>Total Discount</span>
+            <span>Bill Discount (Fixed)</span>
+            <span>- Rs. ${parseFloat(sale.billDiscountValue || 0).toFixed(2)}</span>
+        </div>` :
+            (sale.billDiscountRate > 0 ? `
+        <div style="display: flex; justify-content: space-between; font-size: 14px;">
+            <span>Bill Discount (${sale.billDiscountRate}%)</span>
             <span>- Rs. ${totalDiscountAmount.toFixed(2)}</span>
-        </div>` : ''}
+        </div>` : '')}
 
         <div style="display: flex; justify-content: space-between; font-weight: 900; font-size: 22px; margin-top: 5px; margin-bottom: 5px; border-top: 1px solid #000; padding-top: 15px;">
             <span>TOTAL</span>
@@ -1153,6 +1303,7 @@ async function handleProductSubmit(e) {
             costPrice: parseFloat(document.getElementById('product-cost').value),
             retailPrice: parseFloat(document.getElementById('product-price').value),
             discountRate: parseFloat(document.getElementById('product-discount').value) || 0,
+            discountType: document.getElementById('product-discount-type').value || 'percent',
             stock: parseInt(document.getElementById('product-stock').value),
             lowStockThreshold: parseInt(document.getElementById('low-stock-threshold').value) || 3,
             image: image // Store base64 string
@@ -1193,6 +1344,7 @@ async function editProduct(id) {
     document.getElementById('product-cost').value = product.costPrice;
     document.getElementById('product-price').value = product.retailPrice;
     document.getElementById('product-discount').value = product.discountRate || 0;
+    document.getElementById('product-discount-type').value = product.discountType || 'percent';
     document.getElementById('product-stock').value = product.stock;
     document.getElementById('low-stock-threshold').value = product.lowStockThreshold || 3;
 
@@ -1219,7 +1371,7 @@ async function confirmDeleteProduct(id) {
 async function clearSalesHistory() {
     if (confirm("Are you sure you want to delete ALL sales history? This cannot be undone.")) {
         try {
-            await db.sales.clear();
+            await deleteAllSalesHistory(); // New name from db.js
             loadSalesHistory();
             updateReports();
             alert("Sales history cleared.");
@@ -1237,24 +1389,52 @@ async function loadSalesHistory() {
         if (!tbody) return;
         tbody.innerHTML = '';
 
-        // Filter Logic (Client-side for now because getSalesByDateRange might return all)
+        // Filter Logic
         const dateInput = document.getElementById('sales-filter-date');
         const filterDate = dateInput ? dateInput.value : '';
+        const searchInput = document.getElementById('sales-search');
+        const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
 
         let filteredSales = sales;
+
+        // Apply Date Filter
         if (filterDate) {
             const [y, m, d] = filterDate.split('-');
             const filterDateStr = new Date(y, m - 1, d).toDateString();
-            filteredSales = sales.filter(s => new Date(s.timestamp).toDateString() === filterDateStr);
+            filteredSales = filteredSales.filter(s => new Date(s.timestamp).toDateString() === filterDateStr);
         }
+
+        // Apply Search Filter
+        if (searchQuery) {
+            filteredSales = filteredSales.filter(s => {
+                const invId = formatID(s.id, 'INV').toLowerCase();
+                const customer = (s.customerName || '').toLowerCase();
+                const phone = (s.customerPhone || '').toLowerCase();
+                return invId.includes(searchQuery) || customer.includes(searchQuery) || phone.includes(searchQuery);
+            });
+        }
+
+        // Pagination
+        const totalEntries = filteredSales.length;
+        const totalPages = Math.ceil(totalEntries / salesItemsPerPage);
+
+        // Adjust current page if out of bounds
+        if (salesCurrentPage > totalPages) salesCurrentPage = Math.max(1, totalPages);
+
+        const startIndex = (salesCurrentPage - 1) * salesItemsPerPage;
+        const endIndex = Math.min(startIndex + salesItemsPerPage, totalEntries);
+        const pageSales = filteredSales.slice(startIndex, endIndex);
 
         let totalAmount = 0;
         let totalProfit = 0;
 
-        filteredSales.forEach(sale => {
-            totalAmount += sale.totalAmount;
-            totalProfit += sale.totalProfit;
+        // Calculate totals based on FILTERED sales (all, not just current page)
+        filteredSales.forEach(s => {
+            totalAmount += s.totalAmount;
+            totalProfit += s.totalProfit;
+        });
 
+        pageSales.forEach(sale => {
             const isCredit = sale.paymentStatus === 'Credit';
             const statusClass = isCredit ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700';
 
@@ -1290,15 +1470,81 @@ async function loadSalesHistory() {
             tbody.append(row);
         });
 
-        // Update Footer Totals
+        // Update Totals
         const footerAmount = document.getElementById('sales-footer-amount');
         const footerProfit = document.getElementById('sales-footer-profit');
         if (footerAmount) footerAmount.textContent = `Rs. ${totalAmount.toFixed(2)}`;
         if (footerProfit) footerProfit.textContent = `Rs. ${totalProfit.toFixed(2)}`;
 
+        // Update Pagination Info
+        const infoEl = document.getElementById('sales-pagination-info');
+        if (infoEl) {
+            infoEl.textContent = totalEntries > 0
+                ? `Showing ${startIndex + 1} to ${endIndex} of ${totalEntries} entries`
+                : 'No entries to show';
+        }
+
+        const prevBtn = document.getElementById('sales-prev-btn');
+        const nextBtn = document.getElementById('sales-next-btn');
+        if (prevBtn) prevBtn.disabled = salesCurrentPage === 1;
+        if (nextBtn) nextBtn.disabled = salesCurrentPage >= totalPages;
+
         if (window.lucide) lucide.createIcons();
     } catch (e) {
         console.error("Error loading sales history:", e);
+    }
+}
+
+function previousSalesPage() {
+    if (salesCurrentPage > 1) {
+        salesCurrentPage--;
+        loadSalesHistory();
+    }
+}
+
+function nextSalesPage() {
+    salesCurrentPage++;
+    loadSalesHistory();
+}
+
+async function exportSalesToExcel() {
+    try {
+        const sales = await getAllSales();
+        if (!sales || sales.length === 0) {
+            alert("No sales to export");
+            return;
+        }
+
+        // Create CSV Header
+        let csv = "Date,Invoice ID,Customer,Phone,Method,Status,Subtotal,Total Amount,Profit,Items Count\n";
+
+        sales.forEach(s => {
+            const date = new Date(s.timestamp).toLocaleString().replace(/,/g, '');
+            const invId = formatID(s.id, 'INV');
+            const customer = (s.customerName || 'Anonymous').replace(/,/g, '');
+            const phone = (s.customerPhone || '').replace(/,/g, '');
+            const method = s.paymentMethod || 'Cash';
+            const status = s.paymentStatus || 'Paid';
+            const subtotal = s.subtotal || 0;
+            const total = s.totalAmount || 0;
+            const profit = s.totalProfit || 0;
+            const items = s.items.length;
+
+            csv += `${date},${invId},${customer},${phone},${method},${status},${subtotal},${total},${profit},${items}\n`;
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('hidden', '');
+        a.setAttribute('href', url);
+        a.setAttribute('download', `Sales_History_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    } catch (e) {
+        console.error("Export failed:", e);
+        alert("Export failed");
     }
 }
 
@@ -1333,7 +1579,29 @@ async function viewSaleDetails(id) {
             tbody.appendChild(row);
         });
 
-        document.getElementById('detail-subtotal').textContent = `Rs. ${sale.totalAmount.toFixed(2)}`;
+        const totalDiscount = (sale.subtotal || 0) - sale.totalAmount;
+        document.getElementById('detail-subtotal').textContent = `Rs. ${(sale.subtotal || sale.totalAmount).toFixed(2)}`;
+
+        // Show bill discount if any
+        let discountHtml = '';
+        if (sale.billDiscountType === 'fixed' && (sale.billDiscountValue || 0) > 0) {
+            discountHtml = `<div class="flex justify-between text-xs text-green-600"><span>Bill Discount (Fixed):</span><span>- Rs. ${parseFloat(sale.billDiscountValue).toFixed(2)}</span></div>`;
+        } else if (sale.billDiscountRate > 0) {
+            discountHtml = `<div class="flex justify-between text-xs text-green-600"><span>Bill Discount (${sale.billDiscountRate}%):</span><span>- Rs. ${totalDiscount.toFixed(2)}</span></div>`;
+        }
+
+        const subtotalBox = document.getElementById('detail-subtotal').parentElement;
+        // Remove old discount display if exists to avoid duplication
+        const oldDisc = subtotalBox.parentElement.querySelector('.detail-discount-info');
+        if (oldDisc) oldDisc.remove();
+
+        if (discountHtml) {
+            const div = document.createElement('div');
+            div.className = 'detail-discount-info';
+            div.innerHTML = discountHtml;
+            subtotalBox.insertAdjacentElement('afterend', div);
+        }
+
         document.getElementById('detail-total').textContent = `Rs. ${sale.totalAmount.toFixed(2)}`;
         document.getElementById('detail-profit').textContent = `Rs. ${sale.totalProfit.toFixed(2)}`;
 
@@ -1773,33 +2041,7 @@ window.returnFullBill = returnFullBill;
 window.initiateReturn = initiateReturn;
 window.clearSalesHistory = clearSalesHistory;
 
-function setupConnectivityDetection() {
-    const updateStatus = () => {
-        const isOnline = navigator.onLine;
-        const icon = document.getElementById('status-icon');
-        const text = document.getElementById('status-text');
-        const container = document.getElementById('connectivity-status');
-
-        if (!icon || !text || !container) return;
-
-        if (isOnline) {
-            container.className = "mb-6 p-4 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-between";
-            icon.className = "p-2 bg-indigo-100 text-indigo-600 rounded-lg animate-pulse";
-            icon.innerHTML = '<i data-lucide="wifi" class="w-5 h-5"></i>';
-            text.textContent = "System Online";
-        } else {
-            container.className = "mb-6 p-4 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-between";
-            icon.className = "p-2 bg-amber-100 text-amber-600 rounded-lg";
-            icon.innerHTML = '<i data-lucide="wifi-off" class="w-5 h-5"></i>';
-            text.textContent = "Offline Mode Active";
-        }
-        if (window.lucide) lucide.createIcons();
-    };
-
-    window.addEventListener('online', updateStatus);
-    window.addEventListener('offline', updateStatus);
-    updateStatus();
-}
+// Connectivity detection removed as per user request
 
 // --- Reports ---
 async function updateReports() {
@@ -2019,3 +2261,8 @@ async function printSale(id) {
 window.lockSystem = lockSystem;
 window.unlockSystem = unlockSystem;
 window.printSale = printSale;
+window.previousSalesPage = previousSalesPage;
+window.nextSalesPage = nextSalesPage;
+window.exportSalesToExcel = exportSalesToExcel;
+window.loadSalesHistory = loadSalesHistory;
+window.clearSalesHistory = clearSalesHistory;
