@@ -167,6 +167,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateReports();
         setupConnectivityDetection();
         setupLockTimer();
+        setupMobileToggles();
 
         // Set Initial View
         const dashboardNav = document.querySelector('[data-target="dashboard-section"]');
@@ -201,6 +202,14 @@ function setupNavigation() {
             });
             item.classList.remove('text-slate-400', 'hover:bg-slate-800');
             item.classList.add('bg-indigo-600', 'text-white', 'active');
+
+            // Close sidebar on mobile after selection
+            if (window.innerWidth < 1024) {
+                const sidebar = document.getElementById('sidebar');
+                const backdrop = document.getElementById('sidebar-backdrop');
+                if (sidebar) sidebar.classList.add('-translate-x-full');
+                if (backdrop) backdrop.classList.add('hidden');
+            }
 
             // Show View
             Object.values(views).forEach(view => {
@@ -237,6 +246,43 @@ function setupNavigation() {
             if (targetId === 'dashboard-section') updateReports();
         });
     });
+}
+
+// --- Mobile Responsiveness Helpers ---
+window.toggleSidebar = function () {
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    if (sidebar && backdrop) {
+        sidebar.classList.toggle('-translate-x-full');
+        backdrop.classList.toggle('hidden');
+    }
+};
+
+window.toggleCart = function () {
+    const cartEl = document.getElementById('cart-panel');
+    const backdrop = document.getElementById('cart-backdrop');
+    if (cartEl && backdrop) {
+        cartEl.classList.toggle('translate-x-full');
+        backdrop.classList.toggle('hidden');
+    }
+};
+
+function setupMobileToggles() {
+    const menuBtn = document.getElementById('mobile-menu-btn');
+    const sidebarBackdrop = document.getElementById('sidebar-backdrop');
+    const cartToggle = document.getElementById('mobile-cart-toggle');
+    const cartBackdrop = document.getElementById('cart-backdrop');
+
+    if (menuBtn) menuBtn.addEventListener('click', toggleSidebar);
+    if (sidebarBackdrop) sidebarBackdrop.addEventListener('click', toggleSidebar);
+    if (cartToggle) cartToggle.addEventListener('click', toggleCart);
+    if (cartBackdrop) cartBackdrop.addEventListener('click', toggleCart);
+
+    // Modal Close Buttons (since onclicks were removed for standardizing)
+    const closeSaleDetailBtn = document.getElementById('close-sale-detail-btn');
+    const closeSaleDetailBtnBottom = document.getElementById('close-sale-detail-btn-bottom');
+    if (closeSaleDetailBtn) closeSaleDetailBtn.addEventListener('click', closeSaleDetailModal);
+    if (closeSaleDetailBtnBottom) closeSaleDetailBtnBottom.addEventListener('click', closeSaleDetailModal);
 }
 
 // --- POS Logic ---
@@ -585,6 +631,18 @@ function updateCartUI() {
     if (discountEl) discountEl.textContent = `- Rs. ${totalDiscount.toFixed(2)}`;
     if (totalEl) totalEl.textContent = `Rs. ${finalTotal.toFixed(2)}`;
     if (checkoutBtn) checkoutBtn.disabled = cart.length === 0;
+
+    // Update Mobile Cart Badge
+    const badge = document.getElementById('cart-count-badge');
+    if (badge) {
+        const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
+        badge.textContent = totalItems;
+        if (totalItems > 0) {
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
 }
 
 function openPaymentModal() {

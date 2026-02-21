@@ -77,10 +77,16 @@
     </style>
 </head>
 
-<body class="bg-slate-50 text-slate-900 h-screen overflow-hidden flex">
+<body class="bg-slate-50 text-slate-900 h-screen overflow-hidden flex relative">
+
+    <!-- Sidebar Backdrop (Mobile Only) -->
+    <div id="sidebar-backdrop" class="fixed inset-0 bg-slate-900/50 z-20 hidden lg:hidden" onclick="toggleSidebar()">
+    </div>
 
     <!-- Sidebar -->
-    <aside class="w-64 bg-slate-900 text-white flex flex-col shadow-xl z-20 transition-all duration-300" id="sidebar">
+    <aside
+        class="fixed inset-y-0 left-0 w-64 bg-slate-900 text-white flex flex-col shadow-xl z-30 transform -translate-x-full lg:translate-x-0 lg:static lg:inset-auto transition-all duration-300"
+        id="sidebar">
         <div class="p-6 flex items-center gap-3 border-b border-slate-800">
             <div class="bg-white p-1 rounded-lg">
                 <img src="logosk.png" alt="SK MART" class="w-8 h-8 object-contain">
@@ -132,10 +138,16 @@
     <main class="flex-1 flex flex-col h-full overflow-hidden relative">
 
         <!-- Top Bar -->
-        <header class="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6 shadow-sm z-10">
-            <h2 class="text-xl font-semibold text-slate-800" id="page-title">Dashboard</h2>
+        <header
+            class="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-6 shadow-sm z-10">
+            <div class="flex items-center gap-3">
+                <button id="mobile-menu-btn" class="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+                <h2 class="text-xl font-semibold text-slate-800 truncate" id="page-title">Dashboard</h2>
+            </div>
             <div class="flex items-center gap-4">
-                <div class="text-right">
+                <div class="text-right hidden sm:block">
                     <p class="text-sm font-medium text-slate-900" id="current-date">--</p>
                     <p class="text-xs text-slate-500" id="current-time">--</p>
                 </div>
@@ -150,7 +162,18 @@
         <div class="flex-1 overflow-hidden p-4 md:p-6 bg-slate-50 relative flex flex-col">
 
             <!-- POS Section -->
-            <section id="pos-section" class="content-section flex-1 min-h-0 flex flex-col md:flex-row gap-6 hidden">
+            <section id="pos-section" class="content-section flex-1 min-h-0 flex flex-col lg:flex-row gap-6 hidden">
+                <!-- Mobile Cart Toggle FAB -->
+                <button id="mobile-cart-toggle" onclick="toggleCart()"
+                    class="lg:hidden fixed bottom-6 right-6 w-16 h-16 bg-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center z-20 animate-bounce">
+                    <i data-lucide="shopping-cart" class="w-7 h-7"></i>
+                    <span id="cart-count-badge"
+                        class="absolute -top-1 -right-1 bg-secondary text-white text-[10px] font-bold px-2 py-1 rounded-full border-2 border-white hidden">0</span>
+                </button>
+
+                <!-- Cart Backdrop (Mobile Only) -->
+                <div id="cart-backdrop" class="fixed inset-0 bg-slate-900/50 z-30 hidden lg:hidden"
+                    onclick="toggleCart()"></div>
                 <!-- Product Grid -->
                 <div class="flex-1 flex flex-col min-h-0 bg-slate-50 rounded-xl overflow-hidden">
                     <!-- Search & Filter -->
@@ -193,294 +216,298 @@
                 </div>
 
                 <!-- Cart Panel -->
-                <div class="w-full md:w-96 bg-white rounded-xl shadow-lg border border-slate-200 flex flex-col h-full">
+                <div id="cart-panel"
+                    class="fixed inset-y-0 right-0 w-full sm:w-96 bg-white shadow-2xl z-40 transform translate-x-full lg:static lg:translate-x-0 lg:shadow-lg border-l lg:border border-slate-200 flex flex-col h-full transition-all duration-300">
                     <div
-                        class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 rounded-t-xl">
+                        class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 lg:rounded-t-xl">
                         <h3 class="font-semibold text-slate-800 flex items-center gap-2">
                             <i data-lucide="shopping-cart" class="w-5 h-5 text-indigo-600"></i> Current Order
                         </h3>
-                        <button id="clear-cart-btn" class="text-xs text-red-500 hover:text-red-700 font-medium">Clear
-                            All</button>
-                    </div>
-
-                    <!-- Cart Items -->
-                    <div class="flex-1 overflow-y-auto p-2 space-y-2" id="cart-items">
-                        <!-- Cart Items Injected Here -->
-                        <div class="flex flex-col items-center justify-center h-full text-slate-400">
-                            <i data-lucide="shopping-basket" class="w-12 h-12 mb-2 opacity-50"></i>
-                            <p class="text-sm">Cart is empty</p>
-                            <p class="text-xs">Scan or click products to add</p>
-                        </div>
-                    </div>
-
-                    <!-- Cart Summary -->
-                    <div class="p-4 bg-slate-50 border-t border-slate-200 mt-auto space-y-3 rounded-b-xl">
-                        <div class="flex justify-between text-sm text-slate-600">
-                            <span>Subtotal</span>
-                            <span id="cart-subtotal">Rs. 0.00</span>
-                        </div>
-                        <div class="flex justify-between items-center text-sm text-slate-600">
-                            <span>Bill Discount (%)</span>
-                            <input type="number" id="bill-discount-input" min="0" max="100" value="0"
-                                class="w-16 px-2 py-1 border border-slate-200 rounded text-right focus:ring-1 focus:ring-indigo-500 outline-none"
-                                oninput="updateCartUI()">
-                        </div>
-                        <div class="flex justify-between text-sm text-slate-600">
-                            <span>Discount Amount</span>
-                            <span id="cart-discount" class="text-green-600">- Rs. 0.00</span>
-                        </div>
-                        <div class="flex justify-between items-center pt-2 border-t border-slate-200">
-                            <span class="font-bold text-slate-800 text-lg">Total</span>
-                            <span class="font-bold text-indigo-600 text-2xl" id="cart-total">Rs. 0.00</span>
-                        </div>
-                        <button id="checkout-btn"
-                            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                            <i data-lucide="banknote" class="w-5 h-5"></i> Pay Now
+                        <button onclick="toggleCart()"
+                            class="lg:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg">
+                            <i data-lucide="x" class="w-5 h-5"></i>
                         </button>
                     </div>
+                    <button id="clear-cart-btn" class="text-xs text-red-500 hover:text-red-700 font-medium">Clear
+                        All</button>
                 </div>
-            </section>
 
-            <!-- Products Management Section -->
-            <section id="products-section" class="content-section hidden flex-1 flex flex-col min-h-0">
-                <div class="flex justify-between items-center mb-6">
-                    <div class="flex gap-4">
-                        <input type="text" id="inventory-search" placeholder="Search inventory..."
-                            class="pl-4 pr-10 py-2 rounded-lg border border-slate-200 w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <select id="inventory-filter" class="px-4 py-2 rounded-lg border border-slate-200">
-                            <option value="all">All Items</option>
-                            <option value="low-stock" class="text-red-600 font-medium">Low Stock</option>
-                        </select>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="openCategoryModal()"
-                            class="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm transition-all text-sm font-medium">
-                            <i data-lucide="tag" class="w-4 h-4"></i> Categories
-                        </button>
-                        <button onclick="exportInventoryToExcel()"
-                            class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm transition-all text-sm font-medium">
-                            <i data-lucide="download" class="w-4 h-4"></i> Export Excel
-                        </button>
-                        <button onclick="openProductModal()"
-                            class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm transition-all text-sm font-medium">
-                            <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Product
-                        </button>
+                <!-- Cart Items -->
+                <div class="flex-1 overflow-y-auto p-2 space-y-2" id="cart-items">
+                    <!-- Cart Items Injected Here -->
+                    <div class="flex flex-col items-center justify-center h-full text-slate-400">
+                        <i data-lucide="shopping-basket" class="w-12 h-12 mb-2 opacity-50"></i>
+                        <p class="text-sm">Cart is empty</p>
+                        <p class="text-xs">Scan or click products to add</p>
                     </div>
                 </div>
 
+                <!-- Cart Summary -->
+                <div class="p-4 bg-slate-50 border-t border-slate-200 mt-auto space-y-3 rounded-b-xl">
+                    <div class="flex justify-between text-sm text-slate-600">
+                        <span>Subtotal</span>
+                        <span id="cart-subtotal">Rs. 0.00</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm text-slate-600">
+                        <span>Bill Discount (%)</span>
+                        <input type="number" id="bill-discount-input" min="0" max="100" value="0"
+                            class="w-16 px-2 py-1 border border-slate-200 rounded text-right focus:ring-1 focus:ring-indigo-500 outline-none"
+                            oninput="updateCartUI()">
+                    </div>
+                    <div class="flex justify-between text-sm text-slate-600">
+                        <span>Discount Amount</span>
+                        <span id="cart-discount" class="text-green-600">- Rs. 0.00</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-2 border-t border-slate-200">
+                        <span class="font-bold text-slate-800 text-lg">Total</span>
+                        <span class="font-bold text-indigo-600 text-2xl" id="cart-total">Rs. 0.00</span>
+                    </div>
+                    <button id="checkout-btn"
+                        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i data-lucide="banknote" class="w-5 h-5"></i> Pay Now
+                    </button>
+                </div>
+        </div>
+        </section>
+
+        <!-- Products Management Section -->
+        <section id="products-section" class="content-section hidden flex-1 flex flex-col min-h-0">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex gap-4">
+                    <input type="text" id="inventory-search" placeholder="Search inventory..."
+                        class="pl-4 pr-10 py-2 rounded-lg border border-slate-200 w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <select id="inventory-filter" class="px-4 py-2 rounded-lg border border-slate-200">
+                        <option value="all">All Items</option>
+                        <option value="low-stock" class="text-red-600 font-medium">Low Stock</option>
+                    </select>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="openCategoryModal()"
+                        class="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm transition-all text-sm font-medium">
+                        <i data-lucide="tag" class="w-4 h-4"></i> Categories
+                    </button>
+                    <button onclick="exportInventoryToExcel()"
+                        class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm transition-all text-sm font-medium">
+                        <i data-lucide="download" class="w-4 h-4"></i> Export Excel
+                    </button>
+                    <button onclick="openProductModal()"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm transition-all text-sm font-medium">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Product
+                    </button>
+                </div>
+            </div>
+
+            <div
+                class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex-1 flex flex-col min-h-0">
+                <div class="overflow-auto flex-1">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 sticky top-0 z-10">
+                            <tr>
+                                <th class="p-4 font-semibold text-sm">Photo</th>
+                                <th class="p-4 font-semibold text-sm">Code</th>
+                                <th class="p-4 font-semibold text-sm">Product Name</th>
+                                <th class="p-4 font-semibold text-sm">Category</th>
+                                <th class="p-4 font-semibold text-sm text-right">Cost Price</th>
+                                <th class="p-4 font-semibold text-sm text-right">Retail Price</th>
+                                <th class="p-4 font-semibold text-sm text-center">Stock</th>
+                                <th class="p-4 font-semibold text-sm text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-table-body" class="divide-y divide-slate-100">
+                            <!-- Inventory Rows Here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sales Section -->
+        <section id="sales-section" class="content-section hidden flex-1 flex flex-col min-h-0">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-semibold text-slate-800">Sales History</h3>
+                <div class="flex gap-2">
+                    <button onclick="clearSalesHistory()"
+                        class="px-3 py-2 bg-red-100 text-red-600 rounded-lg flex items-center gap-2 text-sm hover:bg-red-200 font-medium">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i> Clear History
+                    </button>
+                    <button onclick="printSalesHistory()"
+                        class="px-3 py-2 bg-indigo-600 text-white rounded-lg flex items-center gap-2 text-sm hover:bg-indigo-700">
+                        <i data-lucide="printer" class="w-4 h-4"></i> Save as PDF
+                    </button>
+                    <input type="date" id="sales-filter-date" class="px-3 py-2 border border-slate-200 rounded-lg">
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex-1 flex flex-col">
+                <div class="overflow-x-auto flex-1">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 sticky top-0 z-10">
+                            <tr>
+                                <th class="p-4 font-semibold text-sm">Time</th>
+                                <th class="p-4 font-semibold text-sm">Receipt ID</th>
+                                <th class="p-4 font-semibold text-sm">Customer</th>
+                                <th class="p-4 font-semibold text-sm">Status</th>
+                                <th class="p-4 font-semibold text-sm text-right">Total Amount</th>
+                                <th class="p-4 font-semibold text-sm text-right">Profit</th>
+                                <th class="p-4 font-semibold text-sm text-right">Cash</th>
+                                <th class="p-4 font-semibold text-sm text-right">Balance</th>
+                                <th class="p-4 font-semibold text-sm text-center">Items</th>
+                                <th class="p-4 font-semibold text-sm text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sales-table-body" class="divide-y divide-slate-100">
+                            <!-- Sales Rows Here -->
+                        </tbody>
+                        <tfoot class="bg-slate-50 font-bold text-slate-800 border-t border-slate-200 sticky bottom-0">
+                            <tr>
+                                <td colspan="2" class="p-4 text-right">TOTAL (Filtered):</td>
+                                <td class="p-4 text-right" id="sales-footer-amount">Rs. 0.00</td>
+                                <td class="p-4 text-right" id="sales-footer-profit">Rs. 0.00</td>
+                                <td colspan="4"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Section -->
+        <section id="dashboard-section" class="content-section flex-1 flex flex-col min-h-0 overflow-y-auto">
+            <!-- Connectivity Status (Highlights Offline Capability) -->
+            <div id="connectivity-status"
+                class="mb-6 p-4 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-indigo-100 text-indigo-600 rounded-lg animate-pulse" id="status-icon">
+                        <i data-lucide="wifi" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <p class="font-bold text-indigo-900 text-sm" id="status-text">System Online</p>
+                        <p class="text-xs text-indigo-600">Local database active. Changes will sync if connected.
+                        </p>
+                    </div>
+                </div>
                 <div
-                    class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex-1 flex flex-col min-h-0">
-                    <div class="overflow-auto flex-1">
-                        <table class="w-full text-left border-collapse">
-                            <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 sticky top-0 z-10">
-                                <tr>
-                                    <th class="p-4 font-semibold text-sm">Photo</th>
-                                    <th class="p-4 font-semibold text-sm">Code</th>
-                                    <th class="p-4 font-semibold text-sm">Product Name</th>
-                                    <th class="p-4 font-semibold text-sm">Category</th>
-                                    <th class="p-4 font-semibold text-sm text-right">Cost Price</th>
-                                    <th class="p-4 font-semibold text-sm text-right">Retail Price</th>
-                                    <th class="p-4 font-semibold text-sm text-center">Stock</th>
-                                    <th class="p-4 font-semibold text-sm text-center">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="inventory-table-body" class="divide-y divide-slate-100">
-                                <!-- Inventory Rows Here -->
-                            </tbody>
-                        </table>
-                    </div>
+                    class="text-[10px] font-bold uppercase tracking-wider text-indigo-400 border border-indigo-200 px-2 py-1 rounded">
+                    Offline-Ready
                 </div>
-            </section>
+            </div>
 
-            <!-- Sales Section -->
-            <section id="sales-section" class="content-section hidden flex-1 flex flex-col min-h-0">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-lg font-semibold text-slate-800">Sales History</h3>
-                    <div class="flex gap-2">
-                        <button onclick="clearSalesHistory()"
-                            class="px-3 py-2 bg-red-100 text-red-600 rounded-lg flex items-center gap-2 text-sm hover:bg-red-200 font-medium">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i> Clear History
-                        </button>
-                        <button onclick="printSalesHistory()"
-                            class="px-3 py-2 bg-indigo-600 text-white rounded-lg flex items-center gap-2 text-sm hover:bg-indigo-700">
-                            <i data-lucide="printer" class="w-4 h-4"></i> Save as PDF
-                        </button>
-                        <input type="date" id="sales-filter-date" class="px-3 py-2 border border-slate-200 rounded-lg">
-                    </div>
-                </div>
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex-1 flex flex-col">
-                    <div class="overflow-x-auto flex-1">
-                        <table class="w-full text-left border-collapse">
-                            <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 sticky top-0 z-10">
-                                <tr>
-                                    <th class="p-4 font-semibold text-sm">Time</th>
-                                    <th class="p-4 font-semibold text-sm">Receipt ID</th>
-                                    <th class="p-4 font-semibold text-sm">Customer</th>
-                                    <th class="p-4 font-semibold text-sm">Status</th>
-                                    <th class="p-4 font-semibold text-sm text-right">Total Amount</th>
-                                    <th class="p-4 font-semibold text-sm text-right">Profit</th>
-                                    <th class="p-4 font-semibold text-sm text-right">Cash</th>
-                                    <th class="p-4 font-semibold text-sm text-right">Balance</th>
-                                    <th class="p-4 font-semibold text-sm text-center">Items</th>
-                                    <th class="p-4 font-semibold text-sm text-center">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="sales-table-body" class="divide-y divide-slate-100">
-                                <!-- Sales Rows Here -->
-                            </tbody>
-                            <tfoot
-                                class="bg-slate-50 font-bold text-slate-800 border-t border-slate-200 sticky bottom-0">
-                                <tr>
-                                    <td colspan="2" class="p-4 text-right">TOTAL (Filtered):</td>
-                                    <td class="p-4 text-right" id="sales-footer-amount">Rs. 0.00</td>
-                                    <td class="p-4 text-right" id="sales-footer-profit">Rs. 0.00</td>
-                                    <td colspan="4"></td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Dashboard Section -->
-            <section id="dashboard-section" class="content-section flex-1 flex flex-col min-h-0 overflow-y-auto">
-                <!-- Connectivity Status (Highlights Offline Capability) -->
-                <div id="connectivity-status"
-                    class="mb-6 p-4 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="p-2 bg-indigo-100 text-indigo-600 rounded-lg animate-pulse" id="status-icon">
-                            <i data-lucide="wifi" class="w-5 h-5"></i>
-                        </div>
+            <!-- Periodic Summaries -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Today</h4>
+                    <div class="space-y-4">
                         <div>
-                            <p class="font-bold text-indigo-900 text-sm" id="status-text">System Online</p>
-                            <p class="text-xs text-indigo-600">Local database active. Changes will sync if connected.
-                            </p>
+                            <p class="text-2xl font-bold text-slate-800" id="today-revenue">Rs. 0.00</p>
+                            <p class="text-xs text-slate-400">Revenue</p>
                         </div>
-                    </div>
-                    <div
-                        class="text-[10px] font-bold uppercase tracking-wider text-indigo-400 border border-indigo-200 px-2 py-1 rounded">
-                        Offline-Ready
-                    </div>
-                </div>
-
-                <!-- Periodic Summaries -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Today</h4>
-                        <div class="space-y-4">
-                            <div>
-                                <p class="text-2xl font-bold text-slate-800" id="today-revenue">Rs. 0.00</p>
-                                <p class="text-xs text-slate-400">Revenue</p>
-                            </div>
-                            <div class="pt-2 border-t border-slate-50">
-                                <p class="text-sm font-bold text-green-600" id="today-profit">Rs. 0.00</p>
-                                <p class="text-[10px] text-slate-400">Profit</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">This Week</h4>
-                        <div class="space-y-4">
-                            <div>
-                                <p class="text-2xl font-bold text-slate-800" id="week-revenue">Rs. 0.00</p>
-                                <p class="text-xs text-slate-400">Revenue</p>
-                            </div>
-                            <div class="pt-2 border-t border-slate-50">
-                                <p class="text-sm font-bold text-green-600" id="week-profit">Rs. 0.00</p>
-                                <p class="text-[10px] text-slate-400">Profit</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">This Month</h4>
-                        <div class="space-y-4">
-                            <div>
-                                <p class="text-2xl font-bold text-slate-800" id="month-revenue">Rs. 0.00</p>
-                                <p class="text-xs text-slate-400">Revenue</p>
-                            </div>
-                            <div class="pt-2 border-t border-slate-50">
-                                <p class="text-sm font-bold text-green-600" id="month-profit">Rs. 0.00</p>
-                                <p class="text-[10px] text-slate-400">Profit</p>
-                            </div>
+                        <div class="pt-2 border-t border-slate-50">
+                            <p class="text-sm font-bold text-green-600" id="today-profit">Rs. 0.00</p>
+                            <p class="text-[10px] text-slate-400">Profit</p>
                         </div>
                     </div>
                 </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                    <!-- Top Selling Products -->
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="font-bold text-slate-800 flex items-center gap-2">
-                                <i data-lucide="award" class="w-5 h-5 text-amber-500"></i> Top Selling Items
-                            </h3>
-                            <span
-                                class="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded font-bold uppercase">All
-                                Time</span>
-                        </div>
-                        <div class="flex-1 overflow-y-auto max-h-60 pr-2" id="top-products-list">
-                            <!-- Injected by JS -->
-                            <div class="flex items-center justify-center h-32 text-slate-400 italic text-sm">
-                                Not enough data yet...
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Best Categories -->
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="font-bold text-slate-800 flex items-center gap-2">
-                                <i data-lucide="pie-chart" class="w-5 h-5 text-indigo-500"></i> Best Categories
-                            </h3>
-                        </div>
-                        <div class="flex-1 flex flex-col space-y-3" id="top-categories-list">
-                            <!-- Injected by JS -->
-                            <div class="flex items-center justify-center h-32 text-slate-400 italic text-sm">
-                                Not enough data yet...
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Database Backup/Restore -->
-                <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="p-2 bg-amber-100 text-amber-600 rounded-lg">
-                            <i data-lucide="database" class="w-6 h-6"></i>
-                        </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">This Week</h4>
+                    <div class="space-y-4">
                         <div>
-                            <h3 class="text-lg font-bold text-slate-800">Migration & Backup</h3>
-                            <p class="text-sm text-slate-500">Move your entire shop data to another device</p>
+                            <p class="text-2xl font-bold text-slate-800" id="week-revenue">Rs. 0.00</p>
+                            <p class="text-xs text-slate-400">Revenue</p>
+                        </div>
+                        <div class="pt-2 border-t border-slate-50">
+                            <p class="text-sm font-bold text-green-600" id="week-profit">Rs. 0.00</p>
+                            <p class="text-[10px] text-slate-400">Profit</p>
                         </div>
                     </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">This Month</h4>
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-2xl font-bold text-slate-800" id="month-revenue">Rs. 0.00</p>
+                            <p class="text-xs text-slate-400">Revenue</p>
+                        </div>
+                        <div class="pt-2 border-t border-slate-50">
+                            <p class="text-sm font-bold text-green-600" id="month-profit">Rs. 0.00</p>
+                            <p class="text-[10px] text-slate-400">Profit</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                    <div class="flex flex-col sm:flex-row gap-4">
-                        <button onclick="backupFullDatabase()"
-                            class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all shadow-lg">
-                            <i data-lucide="download-cloud" class="w-6 h-6"></i>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Top Selling Products -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i data-lucide="award" class="w-5 h-5 text-amber-500"></i> Top Selling Items
+                        </h3>
+                        <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded font-bold uppercase">All
+                            Time</span>
+                    </div>
+                    <div class="flex-1 overflow-y-auto max-h-60 pr-2" id="top-products-list">
+                        <!-- Injected by JS -->
+                        <div class="flex items-center justify-center h-32 text-slate-400 italic text-sm">
+                            Not enough data yet...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Best Categories -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i data-lucide="pie-chart" class="w-5 h-5 text-indigo-500"></i> Best Categories
+                        </h3>
+                    </div>
+                    <div class="flex-1 flex flex-col space-y-3" id="top-categories-list">
+                        <!-- Injected by JS -->
+                        <div class="flex items-center justify-center h-32 text-slate-400 italic text-sm">
+                            Not enough data yet...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Database Backup/Restore -->
+            <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="p-2 bg-amber-100 text-amber-600 rounded-lg">
+                        <i data-lucide="database" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800">Migration & Backup</h3>
+                        <p class="text-sm text-slate-500">Move your entire shop data to another device</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button onclick="backupFullDatabase()"
+                        class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all shadow-lg">
+                        <i data-lucide="download-cloud" class="w-6 h-6"></i>
+                        <div>
+                            <div class="text-left leading-tight">Backup Data</div>
+                            <div class="text-[10px] uppercase opacity-70 font-normal">Download everything</div>
+                        </div>
+                    </button>
+
+                    <div class="flex-1 relative">
+                        <input type="file" id="restore-db-input" accept=".json" class="hidden"
+                            onchange="restoreFullDatabase(event)">
+                        <button onclick="document.getElementById('restore-db-input').click()"
+                            class="w-full bg-white border-2 border-dashed border-indigo-200 hover:border-indigo-400 text-indigo-600 font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all">
+                            <i data-lucide="upload-cloud" class="w-6 h-6"></i>
                             <div>
-                                <div class="text-left leading-tight">Backup Data</div>
-                                <div class="text-[10px] uppercase opacity-70 font-normal">Download everything</div>
+                                <div class="text-left leading-tight">Restore Data</div>
+                                <div class="text-[10px] uppercase opacity-70 font-normal">Upload backup file</div>
                             </div>
                         </button>
-
-                        <div class="flex-1 relative">
-                            <input type="file" id="restore-db-input" accept=".json" class="hidden"
-                                onchange="restoreFullDatabase(event)">
-                            <button onclick="document.getElementById('restore-db-input').click()"
-                                class="w-full bg-white border-2 border-dashed border-indigo-200 hover:border-indigo-400 text-indigo-600 font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all">
-                                <i data-lucide="upload-cloud" class="w-6 h-6"></i>
-                                <div>
-                                    <div class="text-left leading-tight">Restore Data</div>
-                                    <div class="text-[10px] uppercase opacity-70 font-normal">Upload backup file</div>
-                                </div>
-                            </button>
-                        </div>
                     </div>
-                    <p class="mt-4 text-xs text-slate-400 italic text-center">Note: Restoring data will overwrite
-                        existing data on this device.</p>
                 </div>
-                <!-- Maybe a chart or more detailed breakdown here later -->
-            </section>
+                <p class="mt-4 text-xs text-slate-400 italic text-center">Note: Restoring data will overwrite
+                    existing data on this device.</p>
+            </div>
+            <!-- Maybe a chart or more detailed breakdown here later -->
+        </section>
 
         </div>
     </main>
@@ -701,7 +728,7 @@
                     <h3 class="font-bold text-lg text-slate-800">Sale Details</h3>
                     <p class="text-xs text-slate-500" id="detail-date-id"># --</p>
                 </div>
-                <button onclick="closeSaleDetailModal()" class="text-slate-400 hover:text-slate-600">
+                <button id="close-sale-detail-btn" class="text-slate-400 hover:text-slate-600">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -784,7 +811,7 @@
                     class="px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 font-medium transition-colors flex items-center gap-2">
                     <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Return Full Bill
                 </button>
-                <button onclick="closeSaleDetailModal()"
+                <button id="close-sale-detail-btn-bottom"
                     class="px-4 py-2 border border-slate-300 rounded-lg text-slate-600 hover:bg-white font-medium">
                     Close
                 </button>
