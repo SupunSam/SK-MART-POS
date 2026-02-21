@@ -168,6 +168,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupConnectivityDetection();
         setupLockTimer();
 
+        // Set Initial View
+        const dashboardNav = document.querySelector('[data-target="dashboard-section"]');
+        if (dashboardNav) dashboardNav.click();
+
         console.log("App Initialized Successfully");
     } catch (e) {
         console.error("Initialization Error:", e);
