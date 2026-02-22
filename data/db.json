@@ -57,11 +57,44 @@
       "costPrice": 100,
       "retailPrice": 120,
       "discountRate": 0,
-      "stock": -3,
+      "stock": 118,
       "lowStockThreshold": 3,
       "image": null,
-      "id": 1771645399047
+      "id": 1771645399047,
+      "discountType": "percent"
     }
   ],
-  "sales": []
+  "sales": [
+    {
+      "timestamp": "2026-02-22T06:22:23.026Z",
+      "items": [
+        {
+          "id": 1771645399047,
+          "code": "PRD-00000002",
+          "name": "Test 2",
+          "qty": 1,
+          "price": 120,
+          "cost": 100,
+          "discountRate": 0,
+          "discountValue": 0,
+          "discountType": "percent"
+        }
+      ],
+      "subtotal": 120,
+      "totalAmount": 120,
+      "totalProfit": 20,
+      "billDiscountRate": 0,
+      "billDiscountValue": 0,
+      "billDiscountType": "percent",
+      "payment": {
+        "cash": 120,
+        "balance": 0
+      },
+      "paymentMethod": "Cash",
+      "paymentStatus": "Paid",
+      "customerName": "Anonymous",
+      "customerPhone": "",
+      "id": 1
+    }
+  ]
 }

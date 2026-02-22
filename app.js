@@ -412,7 +412,10 @@ async function handleCategoryAdd(e) {
 async function reloadAppData() {
     try {
         await loadProducts();
+        await loadCategories();
+        await loadSalesHistory();
         alert("Database Reloaded Successfully!");
+        window.location.reload(true);
     } catch (e) {
         console.error("Reload Error:", e);
         alert("Failed to reload database.");
@@ -1035,7 +1038,7 @@ function generateReceiptHTML(sale, formattedId) {
             
     <!-- Header -->
     <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 12px; margin-bottom: 16px;">
-        <h1 style="font-size: 28px; font-weight: 900; margin: 0; word-spacing: -2px;">SK MART TRADING</h1>
+        <h1 style="font-size: 28px; font-weight: 900; margin: 0; word-spacing: -10px;">SK MART TRADING</h1>
         <p style="font-size: 12px; margin: 1px 0; font-style: italic; margin-bottom: 12px;">For Home. For Care. For You.</p>
         <p style="font-size: 14px; margin: 2px 0;">601/2 Nindahena, Gothatuwa</p>
         <p style="font-size: 14px; margin: 2px 0;">TEL: 0112 119 438</p>
