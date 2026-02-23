@@ -1818,7 +1818,7 @@ async function processReturn(saleId, itemIndex, returnQty) {
         if (!confirm(`Confirm return of ${returnQty} x ${item.name}? Stock will be updated.`)) return;
 
         // 1. Update Stock
-        await increaseStock(item.id, returnQty);
+        await increaseStock(item.productId, returnQty);
 
         // 2. Update Sale Record
         item.qty -= returnQty;
@@ -1872,7 +1872,7 @@ async function returnFullBill(saleId) {
 
         // 1. Update Stock for all items
         for (const item of sale.items) {
-            await increaseStock(item.id, item.qty);
+            await increaseStock(item.productId, item.qty);
         }
 
         // 2. Clear items and totals
@@ -2358,8 +2358,6 @@ async function printSale(id) {
 window.lockSystem = lockSystem;
 window.unlockSystem = unlockSystem;
 window.printSale = printSale;
-window.previousSalesPage = previousSalesPage;
-window.nextSalesPage = nextSalesPage;
 window.exportSalesToExcel = exportSalesToExcel;
 window.loadSalesHistory = loadSalesHistory;
 window.clearSalesHistory = clearSalesHistory;
