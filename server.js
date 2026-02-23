@@ -4,13 +4,36 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const fs = require('fs');
 
-const { PrismaClient } = require('./generated/prisma-client');
-const prisma = new PrismaClient();
+console.log('Starting server...');
+console.log('Current directory:', __dirname);
+console.log('Process platform:', process.platform);
+
+const prismaPath = path.join(__dirname, 'generated', 'prisma-client');
+console.log('Checking generated client path:', prismaPath);
+if (fs.existsSync(prismaPath)) {
+    console.log('Generated client directory exists');
+    const files = fs.readdirSync(prismaPath);
+    console.log('Files in generated client:', files);
+} else {
+    console.error('GENERATED CLIENT DIRECTORY DOES NOT EXIST!');
+}
+
+let prisma;
+try {
+    console.log('Attempting to load Prisma Client from ./generated/prisma-client...');
+    const { PrismaClient } = require('./generated/prisma-client');
+    prisma = new PrismaClient();
+    console.log('Prisma Client initialized');
+} catch (err) {
+    console.error('FAILED TO INITIALIZE PRISMA CLIENT:', err);
+}
 
 // Fix for BigInt serialization in JSON
-BigInt.prototype.toJSON = function () {
-    return this.toString();
-};
+if (!BigInt.prototype.toJSON) {
+    BigInt.prototype.toJSON = function () {
+        return this.toString();
+    };
+}
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -24,6 +47,11 @@ app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static(__dirname));
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', time: new Date().toISOString() });
+});
 
 // Helper to save base64 image to file
 function saveBase64Image(base64Data, productCode) {
