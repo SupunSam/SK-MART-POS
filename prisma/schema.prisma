@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id   BigInt @id
+  name String @unique
+}
+
+model Product {
+  id                BigInt  @id
+  code              String  @unique
+  name              String
+  category          String
+  costPrice         Float
+  retailPrice       Float
+  discountRate      Float   @default(0)
+  discountType      String  @default("percent")
+  stock             Int     @default(0)
+  lowStockThreshold Int     @default(3)
+  image             String?
+}
+
+model Sale {
+  id                BigInt     @id
+  timestamp         DateTime   @default(now())
+  subtotal          Float
+  totalAmount       Float
+  totalProfit       Float
+  billDiscountRate  Float      @default(0)
+  billDiscountValue Float      @default(0)
+  billDiscountType  String     @default("percent")
+  paymentCash       Float      @default(0)
+  paymentBalance    Float      @default(0)
+  paymentMethod     String
+  paymentStatus     String
+  customerName      String?
+  customerPhone     String?
+  items             SaleItem[]
+}
+
+model SaleItem {
+  id            Int     @id @default(autoincrement())
+  saleId        BigInt
+  sale          Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId     BigInt?
+  name          String
+  code          String?
+  qty           Int
+  price         Float
+  discountRate  Float?
+  discountValue Float?
+  discountType  String?
+}

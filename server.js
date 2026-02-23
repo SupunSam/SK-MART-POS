@@ -4,39 +4,26 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const fs = require('fs');
 
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+// Fix for BigInt serialization in JSON
+BigInt.prototype.toJSON = function () {
+    return this.toString();
+};
+
 const app = express();
 const port = process.env.PORT || 3000;
 const dataDir = path.join(__dirname, 'data');
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
 
-const dataFilePath = path.join(dataDir, 'db.json');
 const imagesDir = path.join(dataDir, 'images');
 if (!fs.existsSync(imagesDir)) fs.mkdirSync(imagesDir);
-
-// Initialize Data if not exists
-if (!fs.existsSync(dataFilePath)) {
-    const initialData = {
-        categories: [],
-        products: [],
-        sales: []
-    };
-    fs.writeFileSync(dataFilePath, JSON.stringify(initialData, null, 2));
-}
 
 app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static(__dirname));
-
-// Helper to read/write data
-function readData() {
-    const content = fs.readFileSync(dataFilePath, 'utf8');
-    return JSON.parse(content);
-}
-
-function saveData(data) {
-    fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2));
-}
 
 // Helper to save base64 image to file
 function saveBase64Image(base64Data, productCode) {
@@ -60,203 +47,315 @@ function saveBase64Image(base64Data, productCode) {
     }
 }
 
-// Migration Logic
-function migrateImages() {
-    console.log("Checking for image migration...");
-    const data = readData();
-    let migrated = false;
-
-    data.products.forEach(p => {
-        // Migration 1: Extraction from base64 (already done mostly)
-        if (p.image && p.image.startsWith('data:image')) {
-            console.log(`Migrating image for product: ${p.name}`);
-            p.image = saveBase64Image(p.image, p.code);
-            migrated = true;
-        }
-
-        // Migration 2: Renaming from ID-based to Code-based (Handle old patterns like PRD-177...)
-        if (p.image && p.image.startsWith('data/images/')) {
-            const currentFileName = path.basename(p.image);
-            const extension = path.extname(currentFileName);
-            const expectedFileName = `${p.code}${extension}`;
-
-            if (currentFileName !== expectedFileName) {
-                const currentPath = path.join(__dirname, p.image);
-                const newRelativePath = `data/images/${expectedFileName}`;
-                const newPath = path.join(__dirname, newRelativePath);
-
-                if (fs.existsSync(currentPath)) {
-                    try {
-                        fs.renameSync(currentPath, newPath);
-                        console.log(`Renamed: ${currentFileName} -> ${expectedFileName}`);
-                        p.image = newRelativePath;
-                        migrated = true;
-                    } catch (e) {
-                        console.error(`Error renaming ${currentFileName}:`, e);
-                    }
-                }
-            }
-        }
-    });
-
-    if (migrated) {
-        saveData(data);
-        console.log("Migration/Renaming complete. db.json updated.");
-    } else {
-        console.log("No migration/renaming needed.");
-    }
-}
-
-migrateImages(); // Run migration on start
+// No migration needed here as data is now in MySQL
 
 // --- API Endpoints ---
 
 // Categories
-app.get('/api/categories', (req, res) => {
-    const data = readData();
-    res.json(data.categories);
+app.get('/api/categories', async (req, res) => {
+    try {
+        const categories = await prisma.category.findMany();
+        res.json(categories);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
-app.post('/api/categories', (req, res) => {
-    const { name } = req.body;
-    const data = readData();
-    const newCategory = { id: Date.now(), name };
-    data.categories.push(newCategory);
-    saveData(data);
-    res.json(newCategory);
+app.post('/api/categories', async (req, res) => {
+    try {
+        const { name } = req.body;
+        const newCategory = await prisma.category.create({
+            data: { id: Date.now(), name }
+        });
+        res.json(newCategory);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
-app.delete('/api/categories/:id', (req, res) => {
-    const data = readData();
-    data.categories = data.categories.filter(c => c.id != req.params.id);
-    saveData(data);
-    res.json({ success: true });
+app.delete('/api/categories/:id', async (req, res) => {
+    try {
+        await prisma.category.delete({
+            where: { id: BigInt(req.params.id) }
+        });
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
 // Products
-app.get('/api/products', (req, res) => {
-    const data = readData();
-    res.json(data.products);
-});
-
-app.get('/api/products/:id', (req, res) => {
-    const data = readData();
-    const product = data.products.find(p => p.id == req.params.id);
-    res.json(product);
-});
-
-app.post('/api/products', (req, res) => {
-    const p = req.body;
-    const data = readData();
-
-    // Determine ID first if new
-    const id = p.id || Date.now();
-
-    // Extract and save image if it's base64
-    if (p.image && p.image.startsWith('data:image')) {
-        p.image = saveBase64Image(p.image, p.code);
+app.get('/api/products', async (req, res) => {
+    try {
+        const products = await prisma.product.findMany();
+        res.json(products);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
     }
+});
 
-    if (p.id) {
-        const index = data.products.findIndex(item => item.id == p.id);
-        if (index !== -1) {
-            data.products[index] = { ...data.products[index], ...p };
+app.get('/api/products/:id', async (req, res) => {
+    try {
+        const product = await prisma.product.findUnique({
+            where: { id: BigInt(req.params.id) }
+        });
+        res.json(product);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/products', async (req, res) => {
+    try {
+        const p = req.body;
+        const id = p.id ? BigInt(p.id) : BigInt(Date.now());
+
+        // Handle image saving
+        if (p.image && p.image.startsWith('data:image')) {
+            p.image = saveBase64Image(p.image, p.code);
         }
-    } else {
-        p.id = id;
-        data.products.push(p);
+
+        const productData = {
+            code: p.code,
+            name: p.name,
+            category: p.category,
+            costPrice: parseFloat(p.costPrice),
+            retailPrice: parseFloat(p.retailPrice),
+            discountRate: parseFloat(p.discountRate || 0),
+            discountType: p.discountType || 'percent',
+            stock: parseInt(p.stock || 0),
+            lowStockThreshold: parseInt(p.lowStockThreshold || 3),
+            image: p.image
+        };
+
+        const result = await prisma.product.upsert({
+            where: { id: id },
+            update: productData,
+            create: { ...productData, id: id }
+        });
+
+        res.json({ id: result.id.toString() });
+    } catch (e) {
+        console.error("Error saving product:", e);
+        res.status(500).json({ error: e.message });
     }
-    saveData(data);
-    res.json({ id: p.id });
 });
 
-app.patch('/api/products/:id/stock', (req, res) => {
-    const { change } = req.body;
-    const data = readData();
-    const index = data.products.findIndex(p => p.id == req.params.id);
-    if (index !== -1) {
-        data.products[index].stock += change;
-        saveData(data);
+app.patch('/api/products/:id/stock', async (req, res) => {
+    try {
+        const { change } = req.body;
+        await prisma.product.update({
+            where: { id: BigInt(req.params.id) },
+            data: { stock: { increment: change } }
+        });
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
     }
-    res.json({ success: true });
 });
 
-app.delete('/api/products/:id', (req, res) => {
-    const data = readData();
-    const product = data.products.find(p => p.id == req.params.id);
+app.delete('/api/products/:id', async (req, res) => {
+    try {
+        const product = await prisma.product.findUnique({
+            where: { id: BigInt(req.params.id) }
+        });
 
-    if (product && product.image && product.image.startsWith('data/images/')) {
-        const imagePath = path.join(__dirname, product.image);
-        if (fs.existsSync(imagePath)) {
-            try {
-                fs.unlinkSync(imagePath);
-                console.log(`Deleted image: ${product.image}`);
-            } catch (e) {
-                console.error("Error deleting image file:", e);
+        if (product && product.image && product.image.startsWith('data/images/')) {
+            const imagePath = path.join(__dirname, product.image);
+            if (fs.existsSync(imagePath)) {
+                try {
+                    fs.unlinkSync(imagePath);
+                    console.log(`Deleted image: ${product.image}`);
+                } catch (e) {
+                    console.error("Error deleting image file:", e);
+                }
             }
         }
-    }
 
-    data.products = data.products.filter(p => p.id != req.params.id);
-    saveData(data);
-    res.json({ success: true });
+        await prisma.product.delete({
+            where: { id: BigInt(req.params.id) }
+        });
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
 // Sales
-app.get('/api/sales', (req, res) => {
-    const data = readData();
-    res.json(data.sales.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
-});
-
-app.post('/api/sales', (req, res) => {
-    const s = req.body;
-    const data = readData();
-
-    if (s.id) {
-        // Update existing sale
-        const index = data.sales.findIndex(sale => sale.id == s.id);
-        if (index !== -1) {
-            data.sales[index] = { ...data.sales[index], ...s };
-            saveData(data);
-            return res.json({ id: s.id, updated: true });
-        }
+app.get('/api/sales', async (req, res) => {
+    try {
+        const sales = await prisma.sale.findMany({
+            include: { items: true },
+            orderBy: { timestamp: 'desc' }
+        });
+        res.json(sales);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
     }
-
-    // Create new sale
-    // Find max numeric ID (excluding timestamp-based ones)
-    let maxId = 0;
-    data.sales.forEach(sale => {
-        const id = Number(sale.id);
-        if (!isNaN(id) && id < 1000000000000) { // IDs < 10^12 are likely incremental
-            if (id > maxId) maxId = id;
-        }
-    });
-
-    s.id = maxId + 1;
-    data.sales.push(s);
-    saveData(data);
-    res.json({ id: s.id });
 });
 
-app.delete('/api/sales', (req, res) => {
-    const data = readData();
-    data.sales = [];
-    saveData(data);
-    res.json({ success: true });
+app.post('/api/sales', async (req, res) => {
+    try {
+        const s = req.body;
+
+        if (s.id) {
+            // Update existing sale
+            const result = await prisma.sale.update({
+                where: { id: BigInt(s.id) },
+                data: {
+                    paymentStatus: s.paymentStatus,
+                    customerName: s.customerName,
+                    customerPhone: s.customerPhone
+                    // Add other fields as needed for updates
+                },
+                include: { items: true }
+            });
+            return res.json({ id: result.id.toString(), updated: true });
+        }
+
+        // Create new sale
+        // Generate a 12-digit incremental ID or use timestamp
+        // The user suggested using incremental IDs for sales
+        const lastSale = await prisma.sale.findFirst({
+            orderBy: { id: 'desc' }
+        });
+
+        // Fix: If lastSale ID is very large (timestamp), fallback to 0 for incremental start
+        let nextId = BigInt(Date.now()); // Default to timestamp as before
+        if (lastSale && lastSale.id < BigInt(1000000000000)) {
+            nextId = lastSale.id + BigInt(1);
+        } else if (!lastSale) {
+            nextId = BigInt(1);
+        }
+
+        const newSale = await prisma.sale.create({
+            data: {
+                id: nextId,
+                timestamp: s.timestamp ? new Date(s.timestamp) : new Date(),
+                subtotal: parseFloat(s.subtotal || 0),
+                totalAmount: parseFloat(s.totalAmount),
+                totalProfit: parseFloat(s.totalProfit),
+                billDiscountRate: parseFloat(s.billDiscountRate || 0),
+                billDiscountValue: parseFloat(s.billDiscountValue || 0),
+                billDiscountType: s.billDiscountType || 'percent',
+                paymentCash: parseFloat(s.payment?.cash || 0),
+                paymentBalance: parseFloat(s.payment?.balance || 0),
+                paymentMethod: s.paymentMethod,
+                paymentStatus: s.paymentStatus,
+                customerName: s.customerName,
+                customerPhone: s.customerPhone,
+                items: {
+                    create: s.items.map(item => ({
+                        productId: item.id ? BigInt(item.id) : null,
+                        name: item.name,
+                        code: item.code,
+                        qty: parseInt(item.qty),
+                        price: parseFloat(item.price),
+                        discountRate: parseFloat(item.discountRate || 0),
+                        discountValue: parseFloat(item.discountValue || 0),
+                        discountType: item.discountType
+                    }))
+                }
+            },
+            include: { items: true }
+        });
+
+        res.json({ id: newSale.id.toString() });
+    } catch (e) {
+        console.error("Error saving sale:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.delete('/api/sales', async (req, res) => {
+    try {
+        await prisma.saleItem.deleteMany({});
+        await prisma.sale.deleteMany({});
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
 // Backup/Restore
-app.post('/api/restore', (req, res) => {
-    const { products, sales, categories } = req.body;
-    const data = readData();
+app.post('/api/restore', async (req, res) => {
+    try {
+        const { products, sales, categories } = req.body;
 
-    // Overwrite all data with backup
-    if (products) data.products = products;
-    if (sales) data.sales = sales;
-    if (categories) data.categories = categories;
+        // Clear existing data (Be careful here)
+        if (categories) {
+            await prisma.product.deleteMany({}); // Delete products first due to potential dependency (though currently it's just a string)
+            await prisma.category.deleteMany({});
+            for (const cat of categories) {
+                await prisma.category.create({
+                    data: { id: BigInt(cat.id), name: cat.name }
+                });
+            }
+        }
 
-    saveData(data);
-    res.json({ success: true });
+        if (products) {
+            await prisma.product.deleteMany({});
+            for (const p of products) {
+                await prisma.product.create({
+                    data: {
+                        id: BigInt(p.id),
+                        code: p.code,
+                        name: p.name,
+                        category: p.category,
+                        costPrice: parseFloat(p.costPrice),
+                        retailPrice: parseFloat(p.retailPrice),
+                        discountRate: parseFloat(p.discountRate || 0),
+                        discountType: p.discountType || 'percent',
+                        stock: parseInt(p.stock || 0),
+                        lowStockThreshold: parseInt(p.lowStockThreshold || 3),
+                        image: p.image
+                    }
+                });
+            }
+        }
+
+        if (sales) {
+            await prisma.saleItem.deleteMany({});
+            await prisma.sale.deleteMany({});
+            for (const s of sales) {
+                await prisma.sale.create({
+                    data: {
+                        id: BigInt(s.id),
+                        timestamp: new Date(s.timestamp),
+                        subtotal: parseFloat(s.subtotal || 0),
+                        totalAmount: parseFloat(s.totalAmount),
+                        totalProfit: parseFloat(s.totalProfit),
+                        billDiscountRate: parseFloat(s.billDiscountRate || 0),
+                        billDiscountValue: parseFloat(s.billDiscountValue || 0),
+                        billDiscountType: s.billDiscountType || 'percent',
+                        paymentCash: parseFloat(s.payment?.cash || 0),
+                        paymentBalance: parseFloat(s.payment?.balance || 0),
+                        paymentMethod: s.paymentMethod,
+                        paymentStatus: s.paymentStatus,
+                        customerName: s.customerName,
+                        customerPhone: s.customerPhone,
+                        items: {
+                            create: s.items.map(item => ({
+                                productId: item.id ? BigInt(item.id) : null,
+                                name: item.name,
+                                code: item.code,
+                                qty: parseInt(item.qty),
+                                price: parseFloat(item.price),
+                                discountRate: parseFloat(item.discountRate || 0),
+                                discountValue: parseFloat(item.discountValue || 0),
+                                discountType: item.discountType
+                            }))
+                        }
+                    }
+                });
+            }
+        }
+
+        res.json({ success: true });
+    } catch (e) {
+        console.error("Restore failed:", e);
+        res.status(500).json({ error: e.message });
+    }
 });
 
 app.listen(port, () => {
