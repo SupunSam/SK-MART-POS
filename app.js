@@ -1822,12 +1822,13 @@ async function processReturn(saleId, itemIndex, returnQty) {
 
         // 2. Update Sale Record
         item.qty -= returnQty;
+        item.returnedQty = (item.returnedQty || 0) + returnQty;
 
         if (item.qty === 0) {
-            sale.items.splice(itemIndex, 1);
-        } else {
-            sale.items[itemIndex] = item;
+            // item.qty is 0, but we KEEP it in the items list to track returnedQty
+            // However, it should no longer contribute to price/qty displayed in POS if reloaded
         }
+        sale.items[itemIndex] = item;
 
         // Recalculate Sale Totals
         sale.totalAmount = sale.items.reduce((sum, i) => sum + (i.qty * i.price), 0);
@@ -1870,13 +1871,12 @@ async function returnFullBill(saleId) {
         const sale = await getSaleById(saleId);
         if (!sale) return;
 
-        // 1. Update Stock for all items
-        for (const item of sale.items) {
-            await increaseStock(item.productId, item.qty);
-        }
-
         // 2. Clear items and totals
-        sale.items = [];
+        sale.items.forEach(item => {
+            item.returnedQty = (item.returnedQty || 0) + item.qty;
+            item.qty = 0;
+        });
+
         sale.subtotal = 0;
         sale.totalAmount = 0;
         sale.totalProfit = 0;
@@ -2156,9 +2156,9 @@ async function updateReports() {
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
         const stats = {
-            today: { rev: 0, prof: 0 },
-            week: { rev: 0, prof: 0 },
-            month: { rev: 0, prof: 0 }
+            today: { rev: 0, prof: 0, returnsItems: 0, returnsVal: 0 },
+            week: { rev: 0, prof: 0, returnsItems: 0, returnsVal: 0 },
+            month: { rev: 0, prof: 0, returnsItems: 0, returnsVal: 0 }
         };
 
         const itemSales = {}; // productId -> { name, qty, rev }
@@ -2183,16 +2183,33 @@ async function updateReports() {
 
             // Item and Category stats
             sale.items.forEach(item => {
-                // By Item
-                if (!itemSales[item.id]) {
-                    itemSales[item.id] = { name: item.name, qty: 0, rev: 0 };
+                // Returns tracking
+                if (item.returnedQty > 0) {
+                    if (saleDate >= startOfDay) {
+                        stats.today.returnsItems += item.returnedQty;
+                        stats.today.returnsVal += (item.returnedQty * item.price);
+                    }
+                    if (saleDate >= startOfWeek) {
+                        stats.week.returnsItems += item.returnedQty;
+                        stats.week.returnsVal += (item.returnedQty * item.price);
+                    }
+                    if (saleDate >= startOfMonth) {
+                        stats.month.returnsItems += item.returnedQty;
+                        stats.month.returnsVal += (item.returnedQty * item.price);
+                    }
                 }
-                itemSales[item.id].qty += item.qty;
-                itemSales[item.id].rev += (item.price * item.qty);
 
-                // By Category (We need to find category from currentProducts if not in item)
-                // In this app, item in sale doesn't have category, let's fix that or lookup
-                const prod = currentProducts.find(p => p.id === item.id);
+                if (item.qty <= 0) return; // Skip zeroed items for sales stats
+
+                // By Item
+                if (!itemSales[item.productId || item.id]) {
+                    itemSales[item.productId || item.id] = { name: item.name, qty: 0, rev: 0 };
+                }
+                itemSales[item.productId || item.id].qty += item.qty;
+                itemSales[item.productId || item.id].rev += (item.price * item.qty);
+
+                // By Category
+                const prod = currentProducts.find(p => p.id == (item.productId || item.id));
                 const cat = prod ? prod.category : 'General';
                 if (!categorySales[cat]) categorySales[cat] = { rev: 0 };
                 categorySales[cat].rev += (item.price * item.qty);
@@ -2206,6 +2223,17 @@ async function updateReports() {
         document.getElementById('week-profit').textContent = `Rs. ${stats.week.prof.toFixed(2)}`;
         document.getElementById('month-revenue').textContent = `Rs. ${stats.month.rev.toFixed(2)}`;
         document.getElementById('month-profit').textContent = `Rs. ${stats.month.prof.toFixed(2)}`;
+
+        // Update Returns Card (using today's context or overall? User asked for total returns card)
+        // Usually these cards show 'Today' stats by default unless switched, 
+        // but the other cards show Month/Week in separate cards.
+        // Let's assume the 4th card should follow the "Today/Week/Month" pattern if we add it to each,
+        // but the user said "a card widget" (singular).
+        // I will make it show Today's returns.
+        const returnCountEl = document.getElementById('return-count');
+        const returnValEl = document.getElementById('return-value');
+        if (returnCountEl) returnCountEl.textContent = stats.today.returnsItems;
+        if (returnValEl) returnValEl.textContent = `Rs. ${stats.today.returnsVal.toFixed(2)}`;
 
         // Update Top Products
         const topProductsList = document.getElementById('top-products-list');

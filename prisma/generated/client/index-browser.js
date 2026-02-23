@@ -165,9 +165,11 @@ exports.Prisma.SaleItemScalarFieldEnum = {
   code: 'code',
   qty: 'qty',
   price: 'price',
+  cost: 'cost',
   discountRate: 'discountRate',
   discountValue: 'discountValue',
-  discountType: 'discountType'
+  discountType: 'discountType',
+  returnedQty: 'returnedQty'
 };
 
 exports.Prisma.SortOrder = {

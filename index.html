@@ -356,7 +356,6 @@
             <!-- Sales Section -->
             <section id="sales-section" class="content-section hidden flex-1 flex flex-col min-h-0">
                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-lg font-semibold text-slate-800">Sales History</h3>
                     <div class="flex gap-2">
                         <input type="text" id="sales-search" placeholder="Search sales..."
                             class="px-3 py-2 border border-slate-200 rounded-lg w-48 focus:ring-2 focus:ring-indigo-500 outline-none"
@@ -453,7 +452,7 @@
 
 
                 <!-- Periodic Summaries -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                         <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Today</h4>
                         <div class="space-y-4">
@@ -461,7 +460,7 @@
                                 <p class="text-2xl font-bold text-slate-800" id="today-revenue">Rs. 0.00</p>
                                 <p class="text-xs text-slate-400">Revenue</p>
                             </div>
-                            <div class="pt-2 border-t border-slate-50">
+                            <div class="pt-2 border-t border-green-100">
                                 <p class="text-sm font-bold text-green-600" id="today-profit">Rs. 0.00</p>
                                 <p class="text-[10px] text-slate-400">Profit</p>
                             </div>
@@ -474,7 +473,7 @@
                                 <p class="text-2xl font-bold text-slate-800" id="week-revenue">Rs. 0.00</p>
                                 <p class="text-xs text-slate-400">Revenue</p>
                             </div>
-                            <div class="pt-2 border-t border-slate-50">
+                            <div class="pt-2 border-t border-green-100">
                                 <p class="text-sm font-bold text-green-600" id="week-profit">Rs. 0.00</p>
                                 <p class="text-[10px] text-slate-400">Profit</p>
                             </div>
@@ -487,9 +486,24 @@
                                 <p class="text-2xl font-bold text-slate-800" id="month-revenue">Rs. 0.00</p>
                                 <p class="text-xs text-slate-400">Revenue</p>
                             </div>
-                            <div class="pt-2 border-t border-slate-50">
+                            <div class="pt-2 border-t border-green-100">
                                 <p class="text-sm font-bold text-green-600" id="month-profit">Rs. 0.00</p>
                                 <p class="text-[10px] text-slate-400">Profit</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Returns Card -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 bg-orange-50/10">
+                        <h4 class="text-xs font-bold text-orange-400 uppercase tracking-widest mb-4">Returns (Today)
+                        </h4>
+                        <div class="space-y-4">
+                            <div>
+                                <p class="text-2xl font-bold text-slate-800" id="return-value">Rs. 0.00</p>
+                                <p class="text-xs text-slate-400">Value Returned</p>
+                            </div>
+                            <div class="pt-2 border-t border-orange-100">
+                                <p class="text-sm font-bold text-orange-600" id="return-count">0</p>
+                                <p class="text-[10px] text-slate-400">Items Returned</p>
                             </div>
                         </div>
                     </div>
@@ -617,7 +631,8 @@
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Product Code</label>
                     <input type="text" id="product-code" required
-                        class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                        maxlength="12">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Product Name</label>

@@ -55,7 +55,9 @@ model SaleItem {
   code          String?
   qty           Int
   price         Float
+  cost          Float?
   discountRate  Float?
   discountValue Float?
   discountType  String?
+  returnedQty   Int     @default(0)
 }

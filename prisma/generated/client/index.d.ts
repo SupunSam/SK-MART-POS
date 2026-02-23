@@ -4151,8 +4151,10 @@ export namespace Prisma {
     productId: number | null
     qty: number | null
     price: number | null
+    cost: number | null
     discountRate: number | null
     discountValue: number | null
+    returnedQty: number | null
   }
 
   export type SaleItemSumAggregateOutputType = {
@@ -4161,8 +4163,10 @@ export namespace Prisma {
     productId: bigint | null
     qty: number | null
     price: number | null
+    cost: number | null
     discountRate: number | null
     discountValue: number | null
+    returnedQty: number | null
   }
 
   export type SaleItemMinAggregateOutputType = {
@@ -4173,9 +4177,11 @@ export namespace Prisma {
     code: string | null
     qty: number | null
     price: number | null
+    cost: number | null
     discountRate: number | null
     discountValue: number | null
     discountType: string | null
+    returnedQty: number | null
   }
 
   export type SaleItemMaxAggregateOutputType = {
@@ -4186,9 +4192,11 @@ export namespace Prisma {
     code: string | null
     qty: number | null
     price: number | null
+    cost: number | null
     discountRate: number | null
     discountValue: number | null
     discountType: string | null
+    returnedQty: number | null
   }
 
   export type SaleItemCountAggregateOutputType = {
@@ -4199,9 +4207,11 @@ export namespace Prisma {
     code: number
     qty: number
     price: number
+    cost: number
     discountRate: number
     discountValue: number
     discountType: number
+    returnedQty: number
     _all: number
   }
 
@@ -4212,8 +4222,10 @@ export namespace Prisma {
     productId?: true
     qty?: true
     price?: true
+    cost?: true
     discountRate?: true
     discountValue?: true
+    returnedQty?: true
   }
 
   export type SaleItemSumAggregateInputType = {
@@ -4222,8 +4234,10 @@ export namespace Prisma {
     productId?: true
     qty?: true
     price?: true
+    cost?: true
     discountRate?: true
     discountValue?: true
+    returnedQty?: true
   }
 
   export type SaleItemMinAggregateInputType = {
@@ -4234,9 +4248,11 @@ export namespace Prisma {
     code?: true
     qty?: true
     price?: true
+    cost?: true
     discountRate?: true
     discountValue?: true
     discountType?: true
+    returnedQty?: true
   }
 
   export type SaleItemMaxAggregateInputType = {
@@ -4247,9 +4263,11 @@ export namespace Prisma {
     code?: true
     qty?: true
     price?: true
+    cost?: true
     discountRate?: true
     discountValue?: true
     discountType?: true
+    returnedQty?: true
   }
 
   export type SaleItemCountAggregateInputType = {
@@ -4260,9 +4278,11 @@ export namespace Prisma {
     code?: true
     qty?: true
     price?: true
+    cost?: true
     discountRate?: true
     discountValue?: true
     discountType?: true
+    returnedQty?: true
     _all?: true
   }
 
@@ -4360,9 +4380,11 @@ export namespace Prisma {
     code: string | null
     qty: number
     price: number
+    cost: number | null
     discountRate: number | null
     discountValue: number | null
     discountType: string | null
+    returnedQty: number
     _count: SaleItemCountAggregateOutputType | null
     _avg: SaleItemAvgAggregateOutputType | null
     _sum: SaleItemSumAggregateOutputType | null
@@ -4392,9 +4414,11 @@ export namespace Prisma {
     code?: boolean
     qty?: boolean
     price?: boolean
+    cost?: boolean
     discountRate?: boolean
     discountValue?: boolean
     discountType?: boolean
+    returnedQty?: boolean
     sale?: boolean | SaleDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["saleItem"]>
 
@@ -4408,12 +4432,14 @@ export namespace Prisma {
     code?: boolean
     qty?: boolean
     price?: boolean
+    cost?: boolean
     discountRate?: boolean
     discountValue?: boolean
     discountType?: boolean
+    returnedQty?: boolean
   }
 
-  export type SaleItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "saleId" | "productId" | "name" | "code" | "qty" | "price" | "discountRate" | "discountValue" | "discountType", ExtArgs["result"]["saleItem"]>
+  export type SaleItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "saleId" | "productId" | "name" | "code" | "qty" | "price" | "cost" | "discountRate" | "discountValue" | "discountType" | "returnedQty", ExtArgs["result"]["saleItem"]>
   export type SaleItemInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     sale?: boolean | SaleDefaultArgs<ExtArgs>
   }
@@ -4431,9 +4457,11 @@ export namespace Prisma {
       code: string | null
       qty: number
       price: number
+      cost: number | null
       discountRate: number | null
       discountValue: number | null
       discountType: string | null
+      returnedQty: number
     }, ExtArgs["result"]["saleItem"]>
     composites: {}
   }
@@ -4811,9 +4839,11 @@ export namespace Prisma {
     readonly code: FieldRef<"SaleItem", 'String'>
     readonly qty: FieldRef<"SaleItem", 'Int'>
     readonly price: FieldRef<"SaleItem", 'Float'>
+    readonly cost: FieldRef<"SaleItem", 'Float'>
     readonly discountRate: FieldRef<"SaleItem", 'Float'>
     readonly discountValue: FieldRef<"SaleItem", 'Float'>
     readonly discountType: FieldRef<"SaleItem", 'String'>
+    readonly returnedQty: FieldRef<"SaleItem", 'Int'>
   }
     
 
@@ -5242,9 +5272,11 @@ export namespace Prisma {
     code: 'code',
     qty: 'qty',
     price: 'price',
+    cost: 'cost',
     discountRate: 'discountRate',
     discountValue: 'discountValue',
-    discountType: 'discountType'
+    discountType: 'discountType',
+    returnedQty: 'returnedQty'
   };
 
   export type SaleItemScalarFieldEnum = (typeof SaleItemScalarFieldEnum)[keyof typeof SaleItemScalarFieldEnum]
@@ -5586,9 +5618,11 @@ export namespace Prisma {
     code?: StringNullableFilter<"SaleItem"> | string | null
     qty?: IntFilter<"SaleItem"> | number
     price?: FloatFilter<"SaleItem"> | number
+    cost?: FloatNullableFilter<"SaleItem"> | number | null
     discountRate?: FloatNullableFilter<"SaleItem"> | number | null
     discountValue?: FloatNullableFilter<"SaleItem"> | number | null
     discountType?: StringNullableFilter<"SaleItem"> | string | null
+    returnedQty?: IntFilter<"SaleItem"> | number
     sale?: XOR<SaleScalarRelationFilter, SaleWhereInput>
   }
 
@@ -5600,9 +5634,11 @@ export namespace Prisma {
     code?: SortOrderInput | SortOrder
     qty?: SortOrder
     price?: SortOrder
+    cost?: SortOrderInput | SortOrder
     discountRate?: SortOrderInput | SortOrder
     discountValue?: SortOrderInput | SortOrder
     discountType?: SortOrderInput | SortOrder
+    returnedQty?: SortOrder
     sale?: SaleOrderByWithRelationInput
     _relevance?: SaleItemOrderByRelevanceInput
   }
@@ -5618,9 +5654,11 @@ export namespace Prisma {
     code?: StringNullableFilter<"SaleItem"> | string | null
     qty?: IntFilter<"SaleItem"> | number
     price?: FloatFilter<"SaleItem"> | number
+    cost?: FloatNullableFilter<"SaleItem"> | number | null
     discountRate?: FloatNullableFilter<"SaleItem"> | number | null
     discountValue?: FloatNullableFilter<"SaleItem"> | number | null
     discountType?: StringNullableFilter<"SaleItem"> | string | null
+    returnedQty?: IntFilter<"SaleItem"> | number
     sale?: XOR<SaleScalarRelationFilter, SaleWhereInput>
   }, "id">
 
@@ -5632,9 +5670,11 @@ export namespace Prisma {
     code?: SortOrderInput | SortOrder
     qty?: SortOrder
     price?: SortOrder
+    cost?: SortOrderInput | SortOrder
     discountRate?: SortOrderInput | SortOrder
     discountValue?: SortOrderInput | SortOrder
     discountType?: SortOrderInput | SortOrder
+    returnedQty?: SortOrder
     _count?: SaleItemCountOrderByAggregateInput
     _avg?: SaleItemAvgOrderByAggregateInput
     _max?: SaleItemMaxOrderByAggregateInput
@@ -5653,9 +5693,11 @@ export namespace Prisma {
     code?: StringNullableWithAggregatesFilter<"SaleItem"> | string | null
     qty?: IntWithAggregatesFilter<"SaleItem"> | number
     price?: FloatWithAggregatesFilter<"SaleItem"> | number
+    cost?: FloatNullableWithAggregatesFilter<"SaleItem"> | number | null
     discountRate?: FloatNullableWithAggregatesFilter<"SaleItem"> | number | null
     discountValue?: FloatNullableWithAggregatesFilter<"SaleItem"> | number | null
     discountType?: StringNullableWithAggregatesFilter<"SaleItem"> | string | null
+    returnedQty?: IntWithAggregatesFilter<"SaleItem"> | number
   }
 
   export type CategoryCreateInput = {
@@ -5920,9 +5962,11 @@ export namespace Prisma {
     code?: string | null
     qty: number
     price: number
+    cost?: number | null
     discountRate?: number | null
     discountValue?: number | null
     discountType?: string | null
+    returnedQty?: number
     sale: SaleCreateNestedOneWithoutItemsInput
   }
 
@@ -5934,9 +5978,11 @@ export namespace Prisma {
     code?: string | null
     qty: number
     price: number
+    cost?: number | null
     discountRate?: number | null
     discountValue?: number | null
     discountType?: string | null
+    returnedQty?: number
   }
 
   export type SaleItemUpdateInput = {
@@ -5945,9 +5991,11 @@ export namespace Prisma {
     code?: NullableStringFieldUpdateOperationsInput | string | null
     qty?: IntFieldUpdateOperationsInput | number
     price?: FloatFieldUpdateOperationsInput | number
+    cost?: NullableFloatFieldUpdateOperationsInput | number | null
     discountRate?: NullableFloatFieldUpdateOperationsInput | number | null
     discountValue?: NullableFloatFieldUpdateOperationsInput | number | null
     discountType?: NullableStringFieldUpdateOperationsInput | string | null
+    returnedQty?: IntFieldUpdateOperationsInput | number
     sale?: SaleUpdateOneRequiredWithoutItemsNestedInput
   }
 
@@ -5959,9 +6007,11 @@ export namespace Prisma {
     code?: NullableStringFieldUpdateOperationsInput | string | null
     qty?: IntFieldUpdateOperationsInput | number
     price?: FloatFieldUpdateOperationsInput | number
+    cost?: NullableFloatFieldUpdateOperationsInput | number | null
     discountRate?: NullableFloatFieldUpdateOperationsInput | number | null
     discountValue?: NullableFloatFieldUpdateOperationsInput | number | null
     discountType?: NullableStringFieldUpdateOperationsInput | string | null
+    returnedQty?: IntFieldUpdateOperationsInput | number
   }
 
   export type SaleItemCreateManyInput = {
@@ -5972,9 +6022,11 @@ export namespace Prisma {
     code?: string | null
     qty: number
     price: number
+    cost?: number | null
     discountRate?: number | null
     discountValue?: number | null
     discountType?: string | null
+    returnedQty?: number
   }
 
   export type SaleItemUpdateManyMutationInput = {
@@ -5983,9 +6035,11 @@ export namespace Prisma {
     code?: NullableStringFieldUpdateOperationsInput | string | null
     qty?: IntFieldUpdateOperationsInput | number
     price?: FloatFieldUpdateOperationsInput | number
+    cost?: NullableFloatFieldUpdateOperationsInput | number | null
     discountRate?: NullableFloatFieldUpdateOperationsInput | number | null
     discountValue?: NullableFloatFieldUpdateOperationsInput | number | null
     discountType?: NullableStringFieldUpdateOperationsInput | string | null
+    returnedQty?: IntFieldUpdateOperationsInput | number
   }
 
   export type SaleItemUncheckedUpdateManyInput = {
@@ -5996,9 +6050,11 @@ export namespace Prisma {
     code?: NullableStringFieldUpdateOperationsInput | string | null
     qty?: IntFieldUpdateOperationsInput | number
     price?: FloatFieldUpdateOperationsInput | number
+    cost?: NullableFloatFieldUpdateOperationsInput | number | null
     discountRate?: NullableFloatFieldUpdateOperationsInput | number | null
     discountValue?: NullableFloatFieldUpdateOperationsInput | number | null
     discountType?: NullableStringFieldUpdateOperationsInput | string | null
+    returnedQty?: IntFieldUpdateOperationsInput | number
   }
 
   export type BigIntFilter<$PrismaModel = never> = {
@@ -6403,9 +6459,11 @@ export namespace Prisma {
     code?: SortOrder
     qty?: SortOrder
     price?: SortOrder
+    cost?: SortOrder
     discountRate?: SortOrder
     discountValue?: SortOrder
     discountType?: SortOrder
+    returnedQty?: SortOrder
   }
 
   export type SaleItemAvgOrderByAggregateInput = {
@@ -6414,8 +6472,10 @@ export namespace Prisma {
     productId?: SortOrder
     qty?: SortOrder
     price?: SortOrder
+    cost?: SortOrder
     discountRate?: SortOrder
     discountValue?: SortOrder
+    returnedQty?: SortOrder
   }
 
   export type SaleItemMaxOrderByAggregateInput = {
@@ -6426,9 +6486,11 @@ export namespace Prisma {
     code?: SortOrder
     qty?: SortOrder
     price?: SortOrder
+    cost?: SortOrder
     discountRate?: SortOrder
     discountValue?: SortOrder
     discountType?: SortOrder
+    returnedQty?: SortOrder
   }
 
   export type SaleItemMinOrderByAggregateInput = {
@@ -6439,9 +6501,11 @@ export namespace Prisma {
     code?: SortOrder
     qty?: SortOrder
     price?: SortOrder
+    cost?: SortOrder
     discountRate?: SortOrder
     discountValue?: SortOrder
     discountType?: SortOrder
+    returnedQty?: SortOrder
   }
 
   export type SaleItemSumOrderByAggregateInput = {
@@ -6450,8 +6514,10 @@ export namespace Prisma {
     productId?: SortOrder
     qty?: SortOrder
     price?: SortOrder
+    cost?: SortOrder
     discountRate?: SortOrder
     discountValue?: SortOrder
+    returnedQty?: SortOrder
   }
 
   export type BigIntNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -6837,9 +6903,11 @@ export namespace Prisma {
     code?: string | null
     qty: number
     price: number
+    cost?: number | null
     discountRate?: number | null
     discountValue?: number | null
     discountType?: string | null
+    returnedQty?: number
   }
 
   export type SaleItemUncheckedCreateWithoutSaleInput = {
@@ -6849,9 +6917,11 @@ export namespace Prisma {
     code?: string | null
     qty: number
     price: number
+    cost?: number | null
     discountRate?: number | null
     discountValue?: number | null
     discountType?: string | null
+    returnedQty?: number
   }
 
   export type SaleItemCreateOrConnectWithoutSaleInput = {
@@ -6891,9 +6961,11 @@ export namespace Prisma {
     code?: StringNullableFilter<"SaleItem"> | string | null
     qty?: IntFilter<"SaleItem"> | number
     price?: FloatFilter<"SaleItem"> | number
+    cost?: FloatNullableFilter<"SaleItem"> | number | null
     discountRate?: FloatNullableFilter<"SaleItem"> | number | null
     discountValue?: FloatNullableFilter<"SaleItem"> | number | null
     discountType?: StringNullableFilter<"SaleItem"> | string | null
+    returnedQty?: IntFilter<"SaleItem"> | number
   }
 
   export type SaleCreateWithoutItemsInput = {
@@ -6987,9 +7059,11 @@ export namespace Prisma {
     code?: string | null
     qty: number
     price: number
+    cost?: number | null
     discountRate?: number | null
     discountValue?: number | null
     discountType?: string | null
+    returnedQty?: number
   }
 
   export type SaleItemUpdateWithoutSaleInput = {
@@ -6998,9 +7072,11 @@ export namespace Prisma {
     code?: NullableStringFieldUpdateOperationsInput | string | null
     qty?: IntFieldUpdateOperationsInput | number
     price?: FloatFieldUpdateOperationsInput | number
+    cost?: NullableFloatFieldUpdateOperationsInput | number | null
     discountRate?: NullableFloatFieldUpdateOperationsInput | number | null
     discountValue?: NullableFloatFieldUpdateOperationsInput | number | null
     discountType?: NullableStringFieldUpdateOperationsInput | string | null
+    returnedQty?: IntFieldUpdateOperationsInput | number
   }
 
   export type SaleItemUncheckedUpdateWithoutSaleInput = {
@@ -7010,9 +7086,11 @@ export namespace Prisma {
     code?: NullableStringFieldUpdateOperationsInput | string | null
     qty?: IntFieldUpdateOperationsInput | number
     price?: FloatFieldUpdateOperationsInput | number
+    cost?: NullableFloatFieldUpdateOperationsInput | number | null
     discountRate?: NullableFloatFieldUpdateOperationsInput | number | null
     discountValue?: NullableFloatFieldUpdateOperationsInput | number | null
     discountType?: NullableStringFieldUpdateOperationsInput | string | null
+    returnedQty?: IntFieldUpdateOperationsInput | number
   }
 
   export type SaleItemUncheckedUpdateManyWithoutSaleInput = {
@@ -7022,9 +7100,11 @@ export namespace Prisma {
     code?: NullableStringFieldUpdateOperationsInput | string | null
     qty?: IntFieldUpdateOperationsInput | number
     price?: FloatFieldUpdateOperationsInput | number
+    cost?: NullableFloatFieldUpdateOperationsInput | number | null
     discountRate?: NullableFloatFieldUpdateOperationsInput | number | null
     discountValue?: NullableFloatFieldUpdateOperationsInput | number | null
     discountType?: NullableStringFieldUpdateOperationsInput | string | null
+    returnedQty?: IntFieldUpdateOperationsInput | number
   }
 
 

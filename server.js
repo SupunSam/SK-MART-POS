@@ -200,13 +200,37 @@ app.post('/api/sales', async (req, res) => {
 
         if (s.id) {
             // Update existing sale
+            // We delete old items and recreate them to ensure sync
+            await prisma.saleItem.deleteMany({
+                where: { saleId: BigInt(s.id) }
+            });
+
             const result = await prisma.sale.update({
                 where: { id: BigInt(s.id) },
                 data: {
+                    subtotal: parseFloat(s.subtotal || 0),
+                    totalAmount: parseFloat(s.totalAmount),
+                    totalProfit: parseFloat(s.totalProfit),
+                    paymentCash: parseFloat(s.payment?.cash || 0),
+                    paymentBalance: parseFloat(s.payment?.balance || 0),
+                    paymentMethod: s.paymentMethod,
                     paymentStatus: s.paymentStatus,
                     customerName: s.customerName,
-                    customerPhone: s.customerPhone
-                    // Add other fields as needed for updates
+                    customerPhone: s.customerPhone,
+                    items: {
+                        create: s.items.map(item => ({
+                            productId: item.productId ? BigInt(item.productId) : (item.id ? BigInt(item.id) : null),
+                            name: item.name,
+                            code: item.code,
+                            qty: item.qty,
+                            price: parseFloat(item.price),
+                            cost: parseFloat(item.cost || 0),
+                            returnedQty: parseInt(item.returnedQty || 0),
+                            discountRate: parseFloat(item.discountRate || 0),
+                            discountValue: parseFloat(item.discountValue || 0),
+                            discountType: item.discountType || 'percent'
+                        }))
+                    }
                 },
                 include: { items: true }
             });
@@ -251,6 +275,8 @@ app.post('/api/sales', async (req, res) => {
                         code: item.code,
                         qty: parseInt(item.qty),
                         price: parseFloat(item.price),
+                        cost: parseFloat(item.cost || 0),
+                        returnedQty: parseInt(item.returnedQty || 0),
                         discountRate: parseFloat(item.discountRate || 0),
                         discountValue: parseFloat(item.discountValue || 0),
                         discountType: item.discountType
@@ -341,6 +367,7 @@ app.post('/api/restore', async (req, res) => {
                                 code: item.code,
                                 qty: parseInt(item.qty),
                                 price: parseFloat(item.price),
+                                cost: parseFloat(item.cost || 0),
                                 discountRate: parseFloat(item.discountRate || 0),
                                 discountValue: parseFloat(item.discountValue || 0),
                                 discountType: item.discountType

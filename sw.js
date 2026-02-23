@@ -53,11 +53,13 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
         fetch(event.request)
             .then((response) => {
-                // If network is available, cache the latest version
-                const responseClone = response.clone();
-                caches.open(CACHE_NAME).then((cache) => {
-                    cache.put(event.request, responseClone);
-                });
+                // If network is available, cache the latest version (GET only)
+                if (event.request.method === 'GET') {
+                    const responseClone = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, responseClone);
+                    });
+                }
                 return response;
             })
             .catch(() => {
