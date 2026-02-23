@@ -4,36 +4,13 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const fs = require('fs');
 
-console.log('Starting server...');
-console.log('Current directory:', __dirname);
-console.log('Process platform:', process.platform);
-
-const prismaPath = path.join(__dirname, 'generated', 'prisma-client');
-console.log('Checking generated client path:', prismaPath);
-if (fs.existsSync(prismaPath)) {
-    console.log('Generated client directory exists');
-    const files = fs.readdirSync(prismaPath);
-    console.log('Files in generated client:', files);
-} else {
-    console.error('GENERATED CLIENT DIRECTORY DOES NOT EXIST!');
-}
-
-let prisma;
-try {
-    console.log('Attempting to load Prisma Client from ./generated/prisma-client...');
-    const { PrismaClient } = require('./generated/prisma-client');
-    prisma = new PrismaClient();
-    console.log('Prisma Client initialized');
-} catch (err) {
-    console.error('FAILED TO INITIALIZE PRISMA CLIENT:', err);
-}
+const { PrismaClient } = require('./prisma/generated/client');
+const prisma = new PrismaClient();
 
 // Fix for BigInt serialization in JSON
-if (!BigInt.prototype.toJSON) {
-    BigInt.prototype.toJSON = function () {
-        return this.toString();
-    };
-}
+BigInt.prototype.toJSON = function () {
+    return this.toString();
+};
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -47,44 +24,6 @@ app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static(__dirname));
-
-// Health check and diagnostics endpoint
-app.get('/health', (req, res) => {
-    try {
-        const rootFiles = fs.readdirSync(__dirname);
-        const dataExists = fs.existsSync(dataDir);
-        const prismaExists = !!prisma;
-
-        res.json({
-            status: 'ok',
-            time: new Date().toISOString(),
-            platform: process.platform,
-            nodeVersion: process.version,
-            dirname: __dirname,
-            cwd: process.cwd(),
-            rootFiles,
-            dataExists,
-            prismaExists,
-            env: {
-                PORT: process.env.PORT,
-                NODE_ENV: process.env.NODE_ENV,
-                DATABASE_URL_SET: !!process.env.DATABASE_URL
-            }
-        });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// Explicit root handler to serve index.html
-app.get('/', (req, res) => {
-    const indexPath = path.join(__dirname, 'index.html');
-    if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath);
-    } else {
-        res.status(404).send('index.html not found in ' + __dirname + '. Root files: ' + fs.readdirSync(__dirname).join(', '));
-    }
-});
 
 // Helper to save base64 image to file
 function saveBase64Image(base64Data, productCode) {
