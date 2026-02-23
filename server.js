@@ -119,6 +119,17 @@ app.post('/api/sales', (req, res) => {
     const s = req.body;
     const data = readData();
 
+    if (s.id) {
+        // Update existing sale
+        const index = data.sales.findIndex(sale => sale.id == s.id);
+        if (index !== -1) {
+            data.sales[index] = { ...data.sales[index], ...s };
+            saveData(data);
+            return res.json({ id: s.id, updated: true });
+        }
+    }
+
+    // Create new sale
     // Find max numeric ID (excluding timestamp-based ones)
     let maxId = 0;
     data.sales.forEach(sale => {

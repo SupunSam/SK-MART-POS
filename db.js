@@ -83,6 +83,10 @@ async function deleteAllSalesHistory() {
     return await apiCall('/sales', 'DELETE');
 }
 
+async function updateSale(id, updates) {
+    return await apiCall('/sales', 'POST', { id, ...updates });
+}
+
 async function getAllSales() {
     return await apiCall('/sales');
 }
