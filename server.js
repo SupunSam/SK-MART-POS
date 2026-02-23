@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const fs = require('fs');
 
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require('./generated/prisma-client');
 const prisma = new PrismaClient();
 
 // Fix for BigInt serialization in JSON

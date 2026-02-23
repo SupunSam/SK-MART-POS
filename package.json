@@ -4,8 +4,7 @@
   "description": "Portable POS System for SK Mart",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "postinstall": "node node_modules/prisma/build/index.js generate"
+    "start": "node server.js"
   },
   "dependencies": {
     "@prisma/client": "6.19.2",
