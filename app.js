@@ -7,6 +7,12 @@ let lastSale = null;
 let currentProductImage = null; // Stores data URL of the selected/pasted image
 let salesCurrentPage = 1;
 const salesItemsPerPage = 10;
+let inventoryCurrentPage = 1;
+const inventoryItemsPerPage = 10;
+let categoriesCurrentPage = 1;
+const categoriesItemsPerPage = 10;
+let posCurrentPage = 1;
+const posItemsPerPage = 24;
 
 // --- DOM Elements ---
 const views = {
@@ -39,7 +45,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Event Listeners for POS
         const searchInput = document.getElementById('pos-search');
         if (searchInput) {
-            searchInput.addEventListener('input', filterProducts);
+            searchInput.addEventListener('input', () => {
+                posCurrentPage = 1;
+                filterProducts();
+            });
             searchInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     const code = searchInput.value.trim();
@@ -59,7 +68,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const catFilter = document.getElementById('pos-category-filter');
-        if (catFilter) catFilter.addEventListener('change', filterProducts);
+        if (catFilter) catFilter.addEventListener('change', () => {
+            posCurrentPage = 1;
+            filterProducts();
+        });
 
         const clearBtn = document.getElementById('clear-cart-btn');
         if (clearBtn) clearBtn.addEventListener('click', clearCart);
@@ -85,14 +97,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Event Listeners for Inventory
         const invSearch = document.getElementById('inventory-search');
-        if (invSearch) invSearch.addEventListener('input', loadInventoryTable);
+        if (invSearch) invSearch.addEventListener('input', () => {
+            inventoryCurrentPage = 1;
+            loadInventoryTable();
+        });
 
         const invFilter = document.getElementById('inventory-filter');
-        if (invFilter) invFilter.addEventListener('change', loadInventoryTable);
+        if (invFilter) invFilter.addEventListener('change', () => {
+            inventoryCurrentPage = 1;
+            loadInventoryTable();
+        });
 
         // Event Listeners for Sales History
         const salesDateFilter = document.getElementById('sales-filter-date');
-        if (salesDateFilter) salesDateFilter.addEventListener('change', loadSalesHistory);
+        if (salesDateFilter) salesDateFilter.addEventListener('change', () => {
+            salesCurrentPage = 1;
+            loadSalesHistory();
+        });
 
         // Image Handling (File Input)
         const fileInput = document.getElementById('product-image');
@@ -371,7 +392,12 @@ async function loadCategoriesPage() {
         if (!tbody) return;
 
         tbody.innerHTML = '';
-        categories.forEach(cat => {
+
+        // Pagination
+        const pagination = paginateData(categories, categoriesCurrentPage, categoriesItemsPerPage);
+        categoriesCurrentPage = pagination.currentPage;
+
+        pagination.pageData.forEach(cat => {
             const row = document.createElement('tr');
             row.className = "hover:bg-slate-50 border-b border-slate-100";
             row.innerHTML = `
@@ -384,6 +410,9 @@ async function loadCategoriesPage() {
             `;
             tbody.appendChild(row);
         });
+
+        renderPaginationControls('categories-pagination-container', pagination, 'changeCategoriesPage');
+
         if (window.lucide) lucide.createIcons();
     } catch (e) {
         console.error("Error loading categories page:", e);
@@ -463,8 +492,12 @@ function renderProductGrid(products) {
     const grid = document.getElementById('product-grid');
     if (!grid) return;
 
+    // Pagination for POS
+    const pagination = paginateData(products, posCurrentPage, posItemsPerPage);
+    posCurrentPage = pagination.currentPage; // Sync
+
     grid.innerHTML = '';
-    if (products.length === 0) {
+    if (pagination.pageData.length === 0) {
         grid.innerHTML = `
             <div class="col-span-full flex flex-col items-center justify-center py-12 text-slate-400">
                 <i data-lucide="search-x" class="w-12 h-12 mb-3 opacity-20"></i>
@@ -472,6 +505,7 @@ function renderProductGrid(products) {
             </div>
         `;
         if (window.lucide) lucide.createIcons();
+        renderPaginationControls('pos-pagination', pagination, 'changePOSPage');
         return;
     }
 
@@ -481,7 +515,7 @@ function renderProductGrid(products) {
         grid.className = "flex flex-col gap-2 p-1";
     }
 
-    products.forEach(product => {
+    pagination.pageData.forEach(product => {
         const card = document.createElement('div');
         const stockColor = product.stock <= (product.lowStockThreshold || 3) ? 'bg-red-50 text-red-600' : 'bg-slate-50 text-slate-600';
 
@@ -543,12 +577,22 @@ function renderProductGrid(products) {
         card.onclick = () => addToCart(product);
         grid.appendChild(card);
     });
+
+    renderPaginationControls('pos-pagination', pagination, 'changePOSPage');
+
     if (window.lucide) lucide.createIcons();
 }
 
 function filterProducts() {
     const term = document.getElementById('pos-search').value.toLowerCase();
     const category = document.getElementById('pos-category-filter').value;
+
+    // Reset pagination on search/filter change
+    // We can check if filters changed, but resetting is safer for now
+    // Actually, let's only reset if it's an 'input' event from the search/filter
+    // But since this is called on input, we can just reset it here.
+    // However, changePOSPage ALSO calls filterProducts. 
+    // We need a way to distinguish.
 
     const filtered = currentProducts.filter(p => {
         const termLower = term.toLowerCase();
@@ -1159,18 +1203,30 @@ async function loadInventoryTable() {
         const searchInput = document.getElementById('inventory-search');
         const filterInput = document.getElementById('inventory-filter');
 
+        // Logic to reset page if search/filter input triggered this
+        // But for simplicity, we usually reset page 1 on input events in the listeners.
+
         const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
         const filterType = filterInput ? filterInput.value : 'all';
 
-        tbody.innerHTML = '';
-
-        products.forEach(p => {
+        const filteredProducts = products.filter(p => {
             const matchesSearch = p.name.toLowerCase().includes(searchTerm) || (p.code && p.code.toLowerCase().includes(searchTerm));
-            if (!matchesSearch) return;
+            if (!matchesSearch) return false;
 
             const threshold = p.lowStockThreshold || 3;
-            if (filterType === 'low-stock' && p.stock > threshold) return;
+            if (filterType === 'low-stock' && p.stock > threshold) return false;
 
+            return true;
+        });
+
+        // Pagination
+        const pagination = paginateData(filteredProducts, inventoryCurrentPage, inventoryItemsPerPage);
+        inventoryCurrentPage = pagination.currentPage; // Sync
+
+        tbody.innerHTML = '';
+
+        pagination.pageData.forEach(p => {
+            const threshold = p.lowStockThreshold || 3;
             const row = document.createElement('tr');
             row.className = "hover:bg-slate-50 border-b border-slate-100 items-center";
 
@@ -1204,6 +1260,9 @@ async function loadInventoryTable() {
             `;
             tbody.appendChild(row);
         });
+
+        renderPaginationControls('inventory-pagination-container', pagination, 'changeInventoryPage');
+
         if (window.lucide) lucide.createIcons();
     } catch (e) {
         console.error("Error loading inventory:", e);
@@ -1417,27 +1476,24 @@ async function loadSalesHistory() {
             });
         }
 
-        // Pagination
-        const totalEntries = filteredSales.length;
-        const totalPages = Math.ceil(totalEntries / salesItemsPerPage);
-
-        // Adjust current page if out of bounds
-        if (salesCurrentPage > totalPages) salesCurrentPage = Math.max(1, totalPages);
-
-        const startIndex = (salesCurrentPage - 1) * salesItemsPerPage;
-        const endIndex = Math.min(startIndex + salesItemsPerPage, totalEntries);
-        const pageSales = filteredSales.slice(startIndex, endIndex);
-
+        // Calculate totals based on ALL FILTERED sales
         let totalAmount = 0;
         let totalProfit = 0;
-
-        // Calculate totals based on FILTERED sales (all, not just current page)
         filteredSales.forEach(s => {
             totalAmount += s.totalAmount;
             totalProfit += s.totalProfit;
         });
 
-        pageSales.forEach(sale => {
+        const footerAmount = document.getElementById('sales-footer-amount');
+        const footerProfit = document.getElementById('sales-footer-profit');
+        if (footerAmount) footerAmount.textContent = `Rs. ${totalAmount.toFixed(2)}`;
+        if (footerProfit) footerProfit.textContent = `Rs. ${totalProfit.toFixed(2)}`;
+
+        // Pagination
+        const pagination = paginateData(filteredSales, salesCurrentPage, salesItemsPerPage);
+        salesCurrentPage = pagination.currentPage; // Update sync
+
+        pagination.pageData.forEach(sale => {
             const isCredit = sale.paymentStatus === 'Credit';
             const statusClass = isCredit ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700';
 
@@ -1473,24 +1529,7 @@ async function loadSalesHistory() {
             tbody.append(row);
         });
 
-        // Update Totals
-        const footerAmount = document.getElementById('sales-footer-amount');
-        const footerProfit = document.getElementById('sales-footer-profit');
-        if (footerAmount) footerAmount.textContent = `Rs. ${totalAmount.toFixed(2)}`;
-        if (footerProfit) footerProfit.textContent = `Rs. ${totalProfit.toFixed(2)}`;
-
-        // Update Pagination Info
-        const infoEl = document.getElementById('sales-pagination-info');
-        if (infoEl) {
-            infoEl.textContent = totalEntries > 0
-                ? `Showing ${startIndex + 1} to ${endIndex} of ${totalEntries} entries`
-                : 'No entries to show';
-        }
-
-        const prevBtn = document.getElementById('sales-prev-btn');
-        const nextBtn = document.getElementById('sales-next-btn');
-        if (prevBtn) prevBtn.disabled = salesCurrentPage === 1;
-        if (nextBtn) nextBtn.disabled = salesCurrentPage >= totalPages;
+        renderPaginationControls('sales-pagination-container', pagination, 'changeSalesPage');
 
         if (window.lucide) lucide.createIcons();
     } catch (e) {
@@ -1498,16 +1537,68 @@ async function loadSalesHistory() {
     }
 }
 
-function previousSalesPage() {
-    if (salesCurrentPage > 1) {
-        salesCurrentPage--;
-        loadSalesHistory();
-    }
+function changeSalesPage(page) {
+    salesCurrentPage = page;
+    loadSalesHistory();
 }
 
-function nextSalesPage() {
-    salesCurrentPage++;
-    loadSalesHistory();
+function changeInventoryPage(page) {
+    inventoryCurrentPage = page;
+    loadInventoryTable();
+}
+
+function changeCategoriesPage(page) {
+    categoriesCurrentPage = page;
+    loadCategoriesPage();
+}
+
+function changePOSPage(page) {
+    posCurrentPage = page;
+    filterProducts();
+}
+
+// --- Generic Pagination Helpers ---
+function paginateData(data, page, perPage) {
+    const totalEntries = data.length;
+    const totalPages = Math.ceil(totalEntries / perPage) || 1;
+    const currentPage = Math.min(Math.max(1, page), totalPages);
+    const startIndex = (currentPage - 1) * perPage;
+    const endIndex = Math.min(startIndex + perPage, totalEntries);
+    const pageData = data.slice(startIndex, endIndex);
+
+    return {
+        pageData,
+        totalPages,
+        currentPage,
+        startIndex,
+        endIndex,
+        totalEntries
+    };
+}
+
+function renderPaginationControls(containerId, paginationData, onPageChange) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const { currentPage, totalPages, totalEntries, startIndex, endIndex } = paginationData;
+
+    container.innerHTML = `
+        <span class="text-xs text-slate-500">
+            ${totalEntries > 0 ? `Showing ${startIndex + 1} to ${endIndex} of ${totalEntries} entries` : 'No entries to show'}
+        </span>
+        <div class="flex gap-2">
+            <button class="px-3 py-1 border border-slate-200 rounded bg-white text-slate-600 hover:bg-slate-50 text-xs disabled:opacity-50 font-medium" 
+                    ${currentPage === 1 ? 'disabled' : ''} 
+                    onclick="${onPageChange}(${currentPage - 1})">
+                Previous
+            </button>
+            <button class="px-3 py-1 border border-slate-200 rounded bg-white text-slate-600 hover:bg-slate-50 text-xs disabled:opacity-50 font-medium" 
+                    ${currentPage >= totalPages ? 'disabled' : ''} 
+                    onclick="${onPageChange}(${currentPage + 1})">
+                Next
+            </button>
+        </div>
+    `;
 }
 
 async function exportSalesToExcel() {
@@ -1963,11 +2054,12 @@ async function backupFullDatabase() {
     try {
         const products = await getAllProducts();
         const sales = await getAllSales();
+        const categories = await getAllCategories();
 
         const backupData = {
             version: 2,
             timestamp: new Date().toISOString(),
-            data: { products, sales }
+            data: { products, sales, categories }
         };
 
         const json = JSON.stringify(backupData);
@@ -2001,7 +2093,9 @@ async function restoreFullDatabase(event) {
         try {
             const backup = JSON.parse(e.target.result);
 
-            if (!backup.data || !backup.data.products || !backup.data.sales) {
+            // The user's specific backup file had a {version, timestamp, data: {products}} structure
+            // We should be flexible but require at least products OR categories OR sales
+            if (!backup.data || (!backup.data.products && !backup.data.categories && !backup.data.sales)) {
                 throw new Error("Invalid backup file format");
             }
 

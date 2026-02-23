@@ -22,7 +22,8 @@ if (!fs.existsSync(dataFilePath)) {
 }
 
 app.use(cors());
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static(__dirname));
 
 // Helper to read/write data
@@ -34,10 +35,6 @@ function readData() {
 function saveData(data) {
     fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2));
 }
-
-app.use(cors());
-app.use(bodyParser.json({ limit: '10mb' }));
-app.use(express.static(__dirname));
 
 // --- API Endpoints ---
 
@@ -154,13 +151,13 @@ app.delete('/api/sales', (req, res) => {
 
 // Backup/Restore
 app.post('/api/restore', (req, res) => {
-    const { products, sales } = req.body;
+    const { products, sales, categories } = req.body;
     const data = readData();
 
-    // We overwrite products and sales but keep categories (or we could overwrite everything)
-    // For a "Full Restore", let's overwrite everything that comes in.
+    // Overwrite all data with backup
     if (products) data.products = products;
     if (sales) data.sales = sales;
+    if (categories) data.categories = categories;
 
     saveData(data);
     res.json({ success: true });

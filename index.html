@@ -231,6 +231,11 @@
                         class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 gap-3 overflow-y-auto flex-1 pb-4 pr-1">
                         <!-- Product Cards injected by JS -->
                     </div>
+                    <!-- POS Pagination -->
+                    <div id="pos-pagination"
+                        class="p-3 bg-white border-t border-slate-100 flex items-center justify-between">
+                        <!-- Controls injected by JS -->
+                    </div>
                 </div>
 
                 <!-- Cart Panel -->
@@ -340,6 +345,11 @@
                             </tbody>
                         </table>
                     </div>
+                    <!-- Inventory Pagination -->
+                    <div id="inventory-pagination-container"
+                        class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                        <!-- Controls injected by JS -->
+                    </div>
                 </div>
             </section>
 
@@ -350,7 +360,7 @@
                     <div class="flex gap-2">
                         <input type="text" id="sales-search" placeholder="Search sales..."
                             class="px-3 py-2 border border-slate-200 rounded-lg w-48 focus:ring-2 focus:ring-indigo-500 outline-none"
-                            oninput="loadSalesHistory()">
+                            oninput="salesCurrentPage=1; loadSalesHistory()">
                         <button onclick="clearSalesHistory()"
                             class="px-3 py-2 bg-red-100 text-red-600 rounded-lg flex items-center gap-2 text-sm hover:bg-red-200 font-medium">
                             <i data-lucide="trash-2" class="w-4 h-4"></i> Clear History
@@ -395,15 +405,9 @@
                         </table>
                     </div>
                     <!-- Pagination Controls -->
-                    <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
-                        <span class="text-xs text-slate-500" id="sales-pagination-info">Showing 0 to 0 of 0
-                            entries</span>
-                        <div class="flex gap-2">
-                            <button id="sales-prev-btn" onclick="previousSalesPage()"
-                                class="px-3 py-1 border border-slate-200 rounded bg-white text-slate-600 hover:bg-slate-50 text-xs disabled:opacity-50 font-medium">Previous</button>
-                            <button id="sales-next-btn" onclick="nextSalesPage()"
-                                class="px-3 py-1 border border-slate-200 rounded bg-white text-slate-600 hover:bg-slate-50 text-xs disabled:opacity-50 font-medium">Next</button>
-                        </div>
+                    <div id="sales-pagination-container"
+                        class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                        <!-- Controls injected by JS -->
                     </div>
                 </div>
             </section>
@@ -434,6 +438,11 @@
                                 <!-- Categories injected here -->
                             </tbody>
                         </table>
+                    </div>
+                    <!-- Categories Pagination -->
+                    <div id="categories-pagination-container"
+                        class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                        <!-- Controls injected by JS -->
                     </div>
                 </div>
             </section>
