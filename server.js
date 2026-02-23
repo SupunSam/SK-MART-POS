@@ -48,9 +48,42 @@ app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static(__dirname));
 
-// Health check endpoint
+// Health check and diagnostics endpoint
 app.get('/health', (req, res) => {
-    res.json({ status: 'ok', time: new Date().toISOString() });
+    try {
+        const rootFiles = fs.readdirSync(__dirname);
+        const dataExists = fs.existsSync(dataDir);
+        const prismaExists = !!prisma;
+
+        res.json({
+            status: 'ok',
+            time: new Date().toISOString(),
+            platform: process.platform,
+            nodeVersion: process.version,
+            dirname: __dirname,
+            cwd: process.cwd(),
+            rootFiles,
+            dataExists,
+            prismaExists,
+            env: {
+                PORT: process.env.PORT,
+                NODE_ENV: process.env.NODE_ENV,
+                DATABASE_URL_SET: !!process.env.DATABASE_URL
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Explicit root handler to serve index.html
+app.get('/', (req, res) => {
+    const indexPath = path.join(__dirname, 'index.html');
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        res.status(404).send('index.html not found in ' + __dirname + '. Root files: ' + fs.readdirSync(__dirname).join(', '));
+    }
 });
 
 // Helper to save base64 image to file
