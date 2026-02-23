@@ -10,6 +10,8 @@ const dataDir = path.join(__dirname, 'data');
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
 
 const dataFilePath = path.join(dataDir, 'db.json');
+const imagesDir = path.join(dataDir, 'images');
+if (!fs.existsSync(imagesDir)) fs.mkdirSync(imagesDir);
 
 // Initialize Data if not exists
 if (!fs.existsSync(dataFilePath)) {
@@ -35,6 +37,77 @@ function readData() {
 function saveData(data) {
     fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2));
 }
+
+// Helper to save base64 image to file
+function saveBase64Image(base64Data, productCode) {
+    try {
+        if (!base64Data || !base64Data.startsWith('data:image')) return base64Data;
+
+        const matches = base64Data.match(/^data:image\/([A-Za-z-+\/]+);base64,(.+)$/);
+        if (!matches || matches.length !== 3) return base64Data;
+
+        const extension = matches[1] === 'jpeg' ? 'jpg' : matches[1];
+        const buffer = Buffer.from(matches[2], 'base64');
+        const fileName = `${productCode}.${extension}`;
+        const filePath = path.join(imagesDir, fileName);
+
+        fs.writeFileSync(filePath, buffer);
+        console.log(`Saved image: ${fileName}`);
+        return `data/images/${fileName}`; // Relative path
+    } catch (e) {
+        console.error("Error saving image:", e);
+        return base64Data;
+    }
+}
+
+// Migration Logic
+function migrateImages() {
+    console.log("Checking for image migration...");
+    const data = readData();
+    let migrated = false;
+
+    data.products.forEach(p => {
+        // Migration 1: Extraction from base64 (already done mostly)
+        if (p.image && p.image.startsWith('data:image')) {
+            console.log(`Migrating image for product: ${p.name}`);
+            p.image = saveBase64Image(p.image, p.code);
+            migrated = true;
+        }
+
+        // Migration 2: Renaming from ID-based to Code-based (Handle old patterns like PRD-177...)
+        if (p.image && p.image.startsWith('data/images/')) {
+            const currentFileName = path.basename(p.image);
+            const extension = path.extname(currentFileName);
+            const expectedFileName = `${p.code}${extension}`;
+
+            if (currentFileName !== expectedFileName) {
+                const currentPath = path.join(__dirname, p.image);
+                const newRelativePath = `data/images/${expectedFileName}`;
+                const newPath = path.join(__dirname, newRelativePath);
+
+                if (fs.existsSync(currentPath)) {
+                    try {
+                        fs.renameSync(currentPath, newPath);
+                        console.log(`Renamed: ${currentFileName} -> ${expectedFileName}`);
+                        p.image = newRelativePath;
+                        migrated = true;
+                    } catch (e) {
+                        console.error(`Error renaming ${currentFileName}:`, e);
+                    }
+                }
+            }
+        }
+    });
+
+    if (migrated) {
+        saveData(data);
+        console.log("Migration/Renaming complete. db.json updated.");
+    } else {
+        console.log("No migration/renaming needed.");
+    }
+}
+
+migrateImages(); // Run migration on start
 
 // --- API Endpoints ---
 
@@ -75,13 +148,22 @@ app.get('/api/products/:id', (req, res) => {
 app.post('/api/products', (req, res) => {
     const p = req.body;
     const data = readData();
+
+    // Determine ID first if new
+    const id = p.id || Date.now();
+
+    // Extract and save image if it's base64
+    if (p.image && p.image.startsWith('data:image')) {
+        p.image = saveBase64Image(p.image, p.code);
+    }
+
     if (p.id) {
         const index = data.products.findIndex(item => item.id == p.id);
         if (index !== -1) {
             data.products[index] = { ...data.products[index], ...p };
         }
     } else {
-        p.id = Date.now();
+        p.id = id;
         data.products.push(p);
     }
     saveData(data);
@@ -101,6 +183,20 @@ app.patch('/api/products/:id/stock', (req, res) => {
 
 app.delete('/api/products/:id', (req, res) => {
     const data = readData();
+    const product = data.products.find(p => p.id == req.params.id);
+
+    if (product && product.image && product.image.startsWith('data/images/')) {
+        const imagePath = path.join(__dirname, product.image);
+        if (fs.existsSync(imagePath)) {
+            try {
+                fs.unlinkSync(imagePath);
+                console.log(`Deleted image: ${product.image}`);
+            } catch (e) {
+                console.error("Error deleting image file:", e);
+            }
+        }
+    }
+
     data.products = data.products.filter(p => p.id != req.params.id);
     saveData(data);
     res.json({ success: true });
