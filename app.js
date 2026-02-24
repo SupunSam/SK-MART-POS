@@ -510,7 +510,7 @@ function renderProductGrid(products) {
     }
 
     if (posViewMode === 'grid') {
-        grid.className = "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-1";
+        grid.className = "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 xl:grid-cols-8 gap-4 p-1";
     } else {
         grid.className = "flex flex-col gap-2 p-1";
     }

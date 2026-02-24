@@ -10,7 +10,7 @@
     <meta name="theme-color" content="#4f46e5">
 
     <!-- Tailwind CSS (Local) -->
-    <script src="lib/tailwind.js"></script>
+    <link rel="stylesheet" href="/css/style.css">
     <script>
         tailwind.config = {
             theme: {
@@ -193,7 +193,7 @@
                 <div id="cart-backdrop" class="fixed inset-0 bg-slate-900/50 z-30 hidden lg:hidden"
                     onclick="toggleCart()"></div>
                 <!-- Product Grid -->
-                <div class="flex-1 flex flex-col min-h-0 bg-slate-50 rounded-xl overflow-hidden">
+                <div class="flex-1 flex flex-col min-h-0 bg-slate-50 rounded-xl">
                     <!-- Search & Filter -->
                     <div class="mb-4 flex flex-col sm:flex-row gap-3">
                         <div class="relative flex-[2]">
@@ -227,9 +227,11 @@
                     </div>
 
                     <!-- Products List -->
-                    <div id="product-grid"
-                        class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 gap-3 overflow-y-auto flex-1 pb-4 pr-1">
-                        <!-- Product Cards injected by JS -->
+                    <div class="flex-1 overflow-y-auto">
+                        <div id="product-grid"
+                            class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 gap-3 overflow-y-auto flex-1 pb-4 pr-1">
+                            <!-- Product Cards injected by JS -->
+                        </div>
                     </div>
                     <!-- POS Pagination -->
                     <div id="pos-pagination"
@@ -356,20 +358,23 @@
             <!-- Sales Section -->
             <section id="sales-section" class="content-section hidden flex-1 flex flex-col min-h-0">
                 <div class="flex justify-between items-center mb-6">
-                    <div class="flex gap-2">
+                    <div class="flex gap-4">
                         <input type="text" id="sales-search" placeholder="Search sales..."
                             class="px-3 py-2 border border-slate-200 rounded-lg w-48 focus:ring-2 focus:ring-indigo-500 outline-none"
                             oninput="salesCurrentPage=1; loadSalesHistory()">
+                        <input type="date" id="sales-filter-date" class="px-3 py-2 border border-slate-200 rounded-lg"
+                            onchange="loadSalesHistory()">
+                    </div>
+                    <div class="flex gap-2">
                         <button onclick="clearSalesHistory()"
                             class="px-3 py-2 bg-red-100 text-red-600 rounded-lg flex items-center gap-2 text-sm hover:bg-red-200 font-medium">
                             <i data-lucide="trash-2" class="w-4 h-4"></i> Clear History
                         </button>
                         <button onclick="exportSalesToExcel()"
-                            class="px-3 py-2 bg-emerald-600 text-white rounded-lg flex items-center gap-2 text-sm hover:bg-emerald-700">
-                            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Save as Excel
+                            class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm transition-all text-sm font-medium">
+                            <i data-lucide="download" class="w-4 h-4"></i> Export Excel
                         </button>
-                        <input type="date" id="sales-filter-date" class="px-3 py-2 border border-slate-200 rounded-lg"
-                            onchange="loadSalesHistory()">
+
                     </div>
                 </div>
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex-1 flex flex-col">

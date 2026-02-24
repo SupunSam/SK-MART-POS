@@ -9,7 +9,7 @@
     SK MART
   </text>
   <text x="50%" y="75%" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#333">
-    Quality & Freshness
+    Quality &amp; Freshness
   </text>
   <rect x="10" y="10" width="280" height="80" rx="10" ry="10" fill="none" stroke="url(#grad1)" stroke-width="4" />
 </svg>
