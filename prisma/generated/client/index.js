@@ -214,6 +214,14 @@ const config = {
       {
         "fromEnvVar": null,
         "value": "debian-openssl-1.1.x"
+      },
+      {
+        "fromEnvVar": null,
+        "value": "debian-openssl-3.0.x"
+      },
+      {
+        "fromEnvVar": null,
+        "value": "linux-musl-openssl-3.0.x"
       }
     ],
     "previewFeatures": [],
@@ -240,8 +248,8 @@ const config = {
       }
     }
   },
-  "inlineSchema": "generator client {\n  provider      = \"prisma-client-js\"\n  binaryTargets = [\"native\", \"debian-openssl-1.1.x\"]\n  output        = \"./generated/client\"\n}\n\ndatasource db {\n  provider = \"mysql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel Category {\n  id   BigInt @id\n  name String @unique\n}\n\nmodel Product {\n  id                BigInt  @id\n  code              String  @unique\n  name              String\n  category          String\n  costPrice         Float\n  retailPrice       Float\n  discountRate      Float   @default(0)\n  discountType      String  @default(\"percent\")\n  stock             Int     @default(0)\n  lowStockThreshold Int     @default(3)\n  image             String?\n}\n\nmodel Sale {\n  id                BigInt     @id\n  timestamp         DateTime   @default(now())\n  subtotal          Float\n  totalAmount       Float\n  totalProfit       Float\n  billDiscountRate  Float      @default(0)\n  billDiscountValue Float      @default(0)\n  billDiscountType  String     @default(\"percent\")\n  paymentCash       Float      @default(0)\n  paymentBalance    Float      @default(0)\n  paymentMethod     String\n  paymentStatus     String\n  customerName      String?\n  customerPhone     String?\n  items             SaleItem[]\n}\n\nmodel SaleItem {\n  id            Int     @id @default(autoincrement())\n  saleId        BigInt\n  sale          Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)\n  productId     BigInt?\n  name          String\n  code          String?\n  qty           Int\n  price         Float\n  cost          Float?\n  discountRate  Float?\n  discountValue Float?\n  discountType  String?\n  returnedQty   Int     @default(0)\n}\n",
-  "inlineSchemaHash": "82227c39be45480620cbd71b8d95811414fe4f87950999d8695c48846f256ca7",
+  "inlineSchema": "generator client {\n  provider      = \"prisma-client-js\"\n  binaryTargets = [\"native\", \"debian-openssl-1.1.x\", \"debian-openssl-3.0.x\", \"linux-musl-openssl-3.0.x\"]\n  output        = \"./generated/client\"\n  engineType    = \"library\"\n}\n\ndatasource db {\n  provider = \"mysql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel Category {\n  id   BigInt @id\n  name String @unique\n}\n\nmodel Product {\n  id                BigInt  @id\n  code              String  @unique\n  name              String\n  category          String\n  costPrice         Float\n  retailPrice       Float\n  discountRate      Float   @default(0)\n  discountType      String  @default(\"percent\")\n  stock             Int     @default(0)\n  lowStockThreshold Int     @default(3)\n  image             String?\n}\n\nmodel Sale {\n  id                BigInt     @id\n  timestamp         DateTime   @default(now())\n  subtotal          Float\n  totalAmount       Float\n  totalProfit       Float\n  billDiscountRate  Float      @default(0)\n  billDiscountValue Float      @default(0)\n  billDiscountType  String     @default(\"percent\")\n  paymentCash       Float      @default(0)\n  paymentBalance    Float      @default(0)\n  paymentMethod     String\n  paymentStatus     String\n  customerName      String?\n  customerPhone     String?\n  items             SaleItem[]\n}\n\nmodel SaleItem {\n  id            Int     @id @default(autoincrement())\n  saleId        BigInt\n  sale          Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)\n  productId     BigInt?\n  name          String\n  code          String?\n  qty           Int\n  price         Float\n  cost          Float?\n  discountRate  Float?\n  discountValue Float?\n  discountType  String?\n  returnedQty   Int     @default(0)\n}\n",
+  "inlineSchemaHash": "536c7183be69cd16d8747abedbfcbfe4b1bcd4f7461932cf120c2565d72f5d6f",
   "copyEngine": true
 }
 
@@ -286,6 +294,14 @@ path.join(process.cwd(), "prisma/generated/client/query_engine-windows.dll.node"
 // file annotations for bundling tools to include these files
 path.join(__dirname, "libquery_engine-debian-openssl-1.1.x.so.node");
 path.join(process.cwd(), "prisma/generated/client/libquery_engine-debian-openssl-1.1.x.so.node")
+
+// file annotations for bundling tools to include these files
+path.join(__dirname, "libquery_engine-debian-openssl-3.0.x.so.node");
+path.join(process.cwd(), "prisma/generated/client/libquery_engine-debian-openssl-3.0.x.so.node")
+
+// file annotations for bundling tools to include these files
+path.join(__dirname, "libquery_engine-linux-musl-openssl-3.0.x.so.node");
+path.join(process.cwd(), "prisma/generated/client/libquery_engine-linux-musl-openssl-3.0.x.so.node")
 // file annotations for bundling tools to include these files
 path.join(__dirname, "schema.prisma");
 path.join(process.cwd(), "prisma/generated/client/schema.prisma")
