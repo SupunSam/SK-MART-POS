@@ -198,7 +198,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "D:\\SK MART POS\\prisma\\generated\\client",
+      "value": "C:\\Users\\Supun\\Downloads\\SK MART POS\\prisma\\generated\\client",
       "fromEnvVar": null
     },
     "config": {
@@ -216,11 +216,11 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "D:\\SK MART POS\\prisma\\schema.prisma",
+    "sourceFilePath": "C:\\Users\\Supun\\Downloads\\SK MART POS\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": "../../../.env",
+    "rootEnvPath": null,
     "schemaEnvPath": "../../../.env"
   },
   "relativePath": "../..",
