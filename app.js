@@ -464,6 +464,12 @@ window.handleCategoryAdd = handleCategoryAdd;
 window.toggleSidebar = toggleSidebar;
 window.reloadAppData = reloadAppData;
 
+window.updateCartItemQty = updateCartItemQty;
+window.removeFromCart = removeFromCart;
+window.updateItemDiscount = updateItemDiscount;
+window.updateItemDiscountType = updateItemDiscountType;
+
+
 function setPOSViewMode(mode) {
     posViewMode = mode;
 
@@ -605,10 +611,18 @@ function filterProducts() {
 }
 
 function addToCart(product) {
-    const existing = cart.find(item => item.id === product.id);
+    const existing = cart.find(item => item.id == product.id);
     if (existing) {
+        if (existing.qty >= product.stock) {
+            alert(`Cannot add more than ${product.stock} units of "${product.name}" (Out of stock)`);
+            return;
+        }
         existing.qty++;
     } else {
+        if (product.stock <= 0) {
+            alert(`"${product.name}" is out of stock!`);
+            return;
+        }
         // Clone and add default discount from product
         cart.push({
             ...product,
@@ -622,7 +636,7 @@ function addToCart(product) {
 }
 
 function updateItemDiscount(id, val) {
-    const item = cart.find(i => i.id === id);
+    const item = cart.find(i => i.id == id);
     if (item) {
         if (item.discountType === 'fixed') {
             item.discountValue = parseFloat(val) || 0;
@@ -634,7 +648,7 @@ function updateItemDiscount(id, val) {
 }
 
 function updateItemDiscountType(id, type) {
-    const item = cart.find(i => i.id === id);
+    const item = cart.find(i => i.id == id);
     if (item) {
         item.discountType = type;
         updateCartUI();
@@ -642,15 +656,21 @@ function updateItemDiscountType(id, type) {
 }
 
 function removeFromCart(id) {
-    cart = cart.filter(item => item.id !== id);
+    id = Number(id);
+    cart = cart.filter(item => item.id != id);
     updateCartUI();
 }
 
 function updateCartItemQty(id, change) {
-    const item = cart.find(i => i.id === id);
+    id = Number(id);
+    const item = cart.find(i => i.id == id);
     if (!item) return;
 
     if (change > 0) {
+        if (item.qty >= item.stock) {
+            alert(`Only ${item.stock} units available in stock.`);
+            return;
+        }
         item.qty++;
     } else {
         item.qty--;
@@ -711,7 +731,9 @@ function updateCartUI() {
                     <div class="flex items-center gap-1 bg-slate-50 rounded-lg p-0.5 border border-slate-100">
                         <button onclick="updateCartItemQty(${item.id}, -1)" class="w-6 h-6 rounded-md hover:bg-white hover:shadow-sm text-slate-500 transition-all flex items-center justify-center font-bold">-</button>
                         <span class="text-xs font-bold w-5 text-center text-slate-700">${item.qty}</span>
-                        <button onclick="updateCartItemQty(${item.id}, 1)" class="w-6 h-6 rounded-md hover:bg-white hover:shadow-sm text-slate-500 transition-all flex items-center justify-center font-bold">+</button>
+                        <button onclick="updateCartItemQty(${item.id}, 1)" 
+                            class="w-6 h-6 rounded-md hover:bg-white hover:shadow-sm text-slate-500 transition-all flex items-center justify-center font-bold disabled:opacity-30 disabled:cursor-not-allowed"
+                            ${item.qty >= item.stock ? 'disabled title="Stock limit reached"' : ''}>+</button>
                     </div>
                     <button onclick="removeFromCart(${item.id})" class="text-slate-300 hover:text-red-500 transition-colors">
                         <i data-lucide="x" class="w-4 h-4"></i>
@@ -1373,7 +1395,7 @@ async function handleProductSubmit(e) {
 
         // Uniqueness Check for Code
         const allProducts = await getAllProducts();
-        const codeExists = allProducts.some(p => p.code === product.code && p.id !== parseInt(id));
+        const codeExists = allProducts.some(p => p.code === product.code && p.id != id);
 
         if (codeExists) {
             alert(`Product code "${product.code}" already exists in the database. Please use a unique code.`);
