@@ -13,6 +13,8 @@ let categoriesCurrentPage = 1;
 const categoriesItemsPerPage = 10;
 let posCurrentPage = 1;
 const posItemsPerPage = 24;
+let dailyItemsCurrentPage = 1;
+const dailyItemsPerPage = 10;
 
 // --- DOM Elements ---
 const views = {
@@ -38,6 +40,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateCartUI(); // Initialize cart state
         updateDate();
         setInterval(updateDate, 60000);
+
+        // Set Default Filter Dates
+        const today = new Date().toISOString().split('T')[0];
+        const initSalesDateFilter = document.getElementById('sales-filter-date');
+        const dailyDateFilter = document.getElementById('daily-items-filter-date');
+        if (dailyDateFilter) dailyDateFilter.value = today;
 
         // Ensure Global Print Sales function is available
         window.printSalesHistory = printSalesHistory;
@@ -255,6 +263,8 @@ function setupNavigation() {
                 updateReports();
             } else if (target === 'categories-section') {
                 loadCategoriesPage();
+            } else if (target === 'daily-items-section') {
+                loadDailySoldItems();
             }
 
             // Auto-close sidebar on mobile
@@ -1044,7 +1054,15 @@ function generateReceipt(sale, formattedId) {
     // Move print styling to a separate function to avoid pollution
     const printBtn = document.getElementById('print-receipt-btn');
     if (printBtn) {
+        printBtn.disabled = false; // Reset state when showing modal
+        printBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
         printBtn.onclick = () => {
+            // Prevent multiple clicks
+            printBtn.disabled = true;
+            printBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            printBtn.onclick = null;
+
             // Inject temporary print style to head
             const styleId = 'print-temp-style';
             let style = document.getElementById(styleId);
@@ -1068,6 +1086,10 @@ function generateReceipt(sale, formattedId) {
             if (style) style.remove();
             printContainer.innerHTML = '';
             closeSuccessModal();
+
+            // Re-enable for next time if needed (though modal closes)
+            printBtn.disabled = false;
+            printBtn.classList.remove('opacity-50', 'cursor-not-allowed');
         };
     }
 
@@ -1165,11 +1187,11 @@ function generateReceiptHTML(sale, formattedId) {
         ` : `
         <div style="display: flex; justify-content: space-between; font-size: 14px;">
             <span>Cash</span>
-            <span>Rs. ${sale.payment.cash.toFixed(2)}</span>
+            <span>Rs. ${(sale.payment?.cash ?? sale.paymentCash ?? 0).toFixed(2)}</span>
         </div>
         <div style="display: flex; justify-content: space-between; font-size: 14px;">
             <span>Balance</span>
-            <span>Rs. ${sale.payment.balance.toFixed(2)}</span>
+            <span>Rs. ${(sale.payment?.balance ?? sale.paymentBalance ?? 0).toFixed(2)}</span>
         </div>
         `}
     </div>
@@ -1532,13 +1554,16 @@ async function loadSalesHistory() {
                 </td>
                 <td class="p-4 text-right font-bold text-slate-800">Rs. ${sale.totalAmount.toFixed(2)}</td>
                 <td class="p-4 text-right text-green-600 text-sm font-bold">+ ${sale.totalProfit.toFixed(2)}</td>
-                <td class="p-4 text-right text-slate-600 text-xs">Rs. ${(sale.payment?.cash || 0).toFixed(2)}</td>
-                <td class="p-4 text-right text-slate-600 text-xs">Rs. ${(sale.payment?.balance || 0).toFixed(2)}</td>
+                <td class="p-4 text-right text-slate-600 text-xs">Rs. ${(sale.payment?.cash ?? sale.paymentCash ?? 0).toFixed(2)}</td>
+                <td class="p-4 text-right text-slate-600 text-xs">Rs. ${(sale.payment?.balance ?? sale.paymentBalance ?? 0).toFixed(2)}</td>
                 <td class="p-4 text-center">
                      <span class="text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-500">${sale.items.length} items</span>
                 </td>
                 <td class="p-4 text-center">
                     <div class="flex items-center justify-center gap-1">
+                        <button onclick="confirmDeleteSale(${sale.id})" class="text-red-500 hover:text-red-700 p-1 flex items-center justify-center" title="Delete Sale">
+                            <i data-lucide="trash" class="w-4 h-4"></i>
+                        </button>
                         <button onclick="viewSaleDetails(${sale.id})" class="text-indigo-600 hover:text-indigo-800 p-1 flex items-center justify-center" title="View Details">
                             <i data-lucide="eye" class="w-4 h-4"></i>
                         </button>
@@ -1556,6 +1581,39 @@ async function loadSalesHistory() {
         if (window.lucide) lucide.createIcons();
     } catch (e) {
         console.error("Error loading sales history:", e);
+    }
+}
+
+async function confirmDeleteSale(id) {
+    if (!confirm("Are you sure you want to delete this sale? This will also revert stock for the sold items.")) return;
+
+    try {
+        const sale = await getSaleById(id);
+        if (!sale) {
+            alert("Sale not found.");
+            return;
+        }
+
+        // Revert stock for each item in the sale
+        if (sale.items && Array.isArray(sale.items)) {
+            for (const item of sale.items) {
+                if (item.productId) {
+                    await increaseStock(item.productId, item.qty);
+                }
+            }
+        }
+
+        await deleteSale(id);
+
+        loadSalesHistory();
+        loadInventoryTable();
+        loadProducts(); // Update POS grid
+        updateReports();
+
+        alert("Sale deleted and stock reverted successfully.");
+    } catch (e) {
+        console.error("Error deleting sale:", e);
+        alert("Failed to delete sale. Check console for details.");
     }
 }
 
@@ -2370,7 +2428,15 @@ async function printSale(id) {
             // Setup Print Button for this specific sale
             const printBtn = document.getElementById('print-receipt-btn');
             if (printBtn) {
+                printBtn.disabled = false; // Reset state
+                printBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
                 printBtn.onclick = () => {
+                    // Prevent multiple clicks
+                    printBtn.disabled = true;
+                    printBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    printBtn.onclick = null;
+
                     const printContainer = document.getElementById('print-container');
                     if (printContainer) {
                         printContainer.innerHTML = receiptHtml;
@@ -2395,12 +2461,173 @@ async function printSale(id) {
                         if (style) style.remove();
                         printContainer.innerHTML = '';
                         closeSuccessModal();
+
+                        // Re-enable for next time
+                        printBtn.disabled = false;
+                        printBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                     }
                 };
             }
         }
     } catch (e) {
         console.error("Error printing sale:", e);
+    }
+}
+
+async function loadDailySoldItems() {
+    try {
+        if (typeof getAllSales !== 'function') return;
+        const sales = await getAllSales();
+        const tbody = document.getElementById('daily-items-table-body');
+        if (!tbody) return;
+
+        const dateInput = document.getElementById('daily-items-filter-date');
+        const filterDate = dateInput ? dateInput.value : '';
+        const searchInput = document.getElementById('daily-items-search');
+        const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+        // 1. Filter sales by date
+        let filteredSales = sales;
+        if (filterDate) {
+            const [y, m, d] = filterDate.split('-');
+            const filterDateStr = new Date(y, m - 1, d).toDateString();
+            filteredSales = filteredSales.filter(s => new Date(s.timestamp).toDateString() === filterDateStr);
+        }
+
+        // 2. Aggregate Items
+        const itemMap = new Map();
+        filteredSales.forEach(sale => {
+            sale.items.forEach(item => {
+                const key = item.productId || item.code || item.name;
+                if (!itemMap.has(key)) {
+                    itemMap.set(key, {
+                        productId: item.productId,
+                        code: item.code,
+                        name: item.name,
+                        qty: 0,
+                        price: item.price,
+                        total: 0
+                    });
+                }
+                const entry = itemMap.get(key);
+                entry.qty += item.qty;
+                entry.total += (item.qty * item.price);
+            });
+        });
+
+        const aggregatedItems = Array.from(itemMap.values());
+
+        // 3. Search Filter
+        let searchedItems = aggregatedItems;
+        if (searchQuery) {
+            searchedItems = searchedItems.filter(item => {
+                const code = (item.code || '').toLowerCase();
+                const name = (item.name || '').toLowerCase();
+                return code.includes(searchQuery) || name.includes(searchQuery);
+            });
+        }
+
+        // 4. Totals for Footer
+        const totalQty = searchedItems.reduce((sum, item) => sum + item.qty, 0);
+        const totalRetail = searchedItems.reduce((sum, item) => sum + item.total, 0);
+
+        const footerQty = document.getElementById('daily-items-footer-qty');
+        const footerTotal = document.getElementById('daily-items-footer-total');
+        if (footerQty) footerQty.textContent = totalQty;
+        if (footerTotal) footerTotal.textContent = `Rs. ${totalRetail.toFixed(2)}`;
+
+        // 5. Pagination
+        const pagination = paginateData(searchedItems, dailyItemsCurrentPage, dailyItemsPerPage);
+        dailyItemsCurrentPage = pagination.currentPage;
+
+        tbody.innerHTML = '';
+
+        // Fetch all products for photos
+        const products = await getAllProducts();
+
+        pagination.pageData.forEach(item => {
+            const product = products.find(p => p.id == item.productId || p.code === item.code);
+            const row = document.createElement('tr');
+            row.className = "hover:bg-slate-50 border-b border-slate-100 items-center";
+
+            let imageTag = '';
+            if (product && product.image) {
+                imageTag = `<img src="${product.image}" class="w-10 h-10 object-cover rounded-md shadow-sm border border-slate-200">`;
+            } else {
+                imageTag = `<div class="w-10 h-10 bg-slate-100 rounded-md flex items-center justify-center text-slate-300 border border-slate-100">
+                                <i data-lucide="image" class="w-5 h-5"></i>
+                            </div>`;
+            }
+
+            row.innerHTML = `
+                <td class="p-4">${imageTag}</td>
+                <td class="p-4 font-mono text-xs text-slate-500">${item.code || '-'}</td>
+                <td class="p-4 font-medium text-slate-800">${item.name}</td>
+                <td class="p-4 text-center font-bold text-slate-700">${item.qty}</td>
+                <td class="p-4 text-right text-slate-600 font-mono text-sm">${parseFloat(item.price).toFixed(2)}</td>
+                <td class="p-4 text-right font-bold text-indigo-600 font-mono text-sm">${item.total.toFixed(2)}</td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        renderPaginationControls('daily-items-pagination-container', pagination, 'changeDailyItemsPage');
+
+        if (window.lucide) lucide.createIcons();
+    } catch (e) {
+        console.error("Error loading daily items:", e);
+    }
+}
+
+function changeDailyItemsPage(page) {
+    dailyItemsCurrentPage = page;
+    loadDailySoldItems();
+}
+
+async function exportDailyItemsToExcel() {
+    try {
+        const sales = await getAllSales();
+        const dateInput = document.getElementById('daily-items-filter-date');
+        const filterDate = dateInput ? dateInput.value : '';
+
+        // 1. Filter sales by date
+        let filteredSales = sales;
+        if (filterDate) {
+            const [y, m, d] = filterDate.split('-');
+            const filterDateStr = new Date(y, m - 1, d).toDateString();
+            filteredSales = filteredSales.filter(s => new Date(s.timestamp).toDateString() === filterDateStr);
+        }
+
+        // 2. Aggregate Items
+        const itemMap = new Map();
+        filteredSales.forEach(sale => {
+            sale.items.forEach(item => {
+                const key = item.productId || item.code || item.name;
+                if (!itemMap.has(key)) {
+                    itemMap.set(key, {
+                        Code: item.code || '',
+                        Name: item.name,
+                        'Qty Sold': 0,
+                        'Unit Price': item.price,
+                        'Total (Retail)': 0
+                    });
+                }
+                const entry = itemMap.get(key);
+                entry['Qty Sold'] += item.qty;
+                entry['Total (Retail)'] += (item.qty * item.price);
+            });
+        });
+
+        const aggregatedItems = Array.from(itemMap.values());
+
+        if (aggregatedItems.length === 0) {
+            alert("No data to export for this date.");
+            return;
+        }
+
+        const fileName = `Daily_Items_${filterDate || 'All'}.csv`;
+        downloadCSV(aggregatedItems, fileName);
+    } catch (e) {
+        console.error("Export failed:", e);
     }
 }
 
@@ -2411,3 +2638,6 @@ window.printSale = printSale;
 window.exportSalesToExcel = exportSalesToExcel;
 window.loadSalesHistory = loadSalesHistory;
 window.clearSalesHistory = clearSalesHistory;
+window.loadDailySoldItems = loadDailySoldItems;
+window.changeDailyItemsPage = changeDailyItemsPage;
+window.exportDailyItemsToExcel = exportDailyItemsToExcel;

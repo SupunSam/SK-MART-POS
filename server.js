@@ -188,7 +188,17 @@ app.get('/api/sales', async (req, res) => {
             include: { items: true },
             orderBy: { timestamp: 'desc' }
         });
-        res.json(sales);
+
+        // Transform flattened payment fields into the nested 'payment' object expected by the frontend
+        const formattedSales = sales.map(s => ({
+            ...s,
+            payment: {
+                cash: s.paymentCash,
+                balance: s.paymentBalance
+            }
+        }));
+
+        res.json(formattedSales);
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
@@ -297,6 +307,17 @@ app.delete('/api/sales', async (req, res) => {
     try {
         await prisma.saleItem.deleteMany({});
         await prisma.sale.deleteMany({});
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.delete('/api/sales/:id', async (req, res) => {
+    try {
+        await prisma.sale.delete({
+            where: { id: BigInt(req.params.id) }
+        });
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: e.message });

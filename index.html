@@ -124,9 +124,9 @@
             </a>
             <a href="#"
                 class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-all underline-none"
-                data-target="categories-section">
-                <i data-lucide="tag" class="w-5 h-5"></i>
-                <span class="font-medium">Categories</span>
+                data-target="daily-items-section">
+                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                <span class="font-medium">Daily Items</span>
             </a>
         </nav>
 
@@ -410,6 +410,58 @@
                     </div>
                     <!-- Pagination Controls -->
                     <div id="sales-pagination-container"
+                        class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                        <!-- Controls injected by JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Daily Sold Items Section -->
+            <section id="daily-items-section" class="content-section hidden flex-1 flex flex-col min-h-0">
+                <div class="flex justify-between items-center mb-6">
+                    <div class="flex gap-4">
+                        <input type="text" id="daily-items-search" placeholder="Search items..."
+                            class="px-3 py-2 border border-slate-200 rounded-lg w-48 focus:ring-2 focus:ring-indigo-500 outline-none"
+                            oninput="dailyItemsCurrentPage=1; loadDailySoldItems()">
+                        <input type="date" id="daily-items-filter-date"
+                            class="px-3 py-2 border border-slate-200 rounded-lg" onchange="loadDailySoldItems()">
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="exportDailyItemsToExcel()"
+                            class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm transition-all text-sm font-medium">
+                            <i data-lucide="download" class="w-4 h-4"></i> Export Excel
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex-1 flex flex-col">
+                    <div class="overflow-x-auto flex-1">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 sticky top-0 z-10">
+                                <tr>
+                                    <th class="p-4 font-semibold text-sm">Photo</th>
+                                    <th class="p-4 font-semibold text-sm">Code</th>
+                                    <th class="p-4 font-semibold text-sm">Product Name</th>
+                                    <th class="p-4 font-semibold text-sm text-center">Qty Sold</th>
+                                    <th class="p-4 font-semibold text-sm text-right">Unit Price</th>
+                                    <th class="p-4 font-semibold text-sm text-right">Total (Retail)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="daily-items-table-body" class="divide-y divide-slate-100">
+                                <!-- Daily Item Rows Here -->
+                            </tbody>
+                            <tfoot
+                                class="bg-slate-50 font-bold text-slate-800 border-t border-slate-200 sticky bottom-0">
+                                <tr>
+                                    <td colspan="3" class="p-4 text-right">TOTAL (Filtered):</td>
+                                    <td class="p-4 text-center" id="daily-items-footer-qty">0</td>
+                                    <td class="p-4"></td>
+                                    <td class="p-4 text-right" id="daily-items-footer-total">Rs. 0.00</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <!-- Pagination Controls -->
+                    <div id="daily-items-pagination-container"
                         class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
                         <!-- Controls injected by JS -->
                     </div>
